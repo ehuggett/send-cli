@@ -1,0 +1,73 @@
+#!/usr/bin/python3
+print('\033[1;41m!!! Experimental/alpha quality suitable for testing at your own risk only !!!\033[0m')
+
+from download import *
+from upload import *
+
+import argparse
+import sys
+from os.path import basename, exists
+
+
+parser = argparse.ArgumentParser(description='Unofficial (Firefox) Send client')
+
+service = parser.add_argument_group('Set the Send service to used').add_mutually_exclusive_group()
+service.add_argument('--service-local', dest='altservice', action='store_const', const='http://localhost:1443/upload', help='Use a Send service at http://localhost:1443/upload')
+service.add_argument('--service-dev', dest='altservice', action='store_const', const='https://send.dev.mozaws.net/', help='Use the Send development server for upload')
+service.add_argument('--service-stage', dest='altservice', action='store_const', const='https://send.stage.mozaws.net/upload', help='Use the Send staging server for upload')
+service.add_argument('--service-live', dest='altservice', action='store_const', const='https://send.firefox.com/upload', help='Use the Send production server for upload (Default)')
+service.add_argument('--service', type=str, default='https://send.firefox.com/upload', help='Specify the url of a Send service to use for upload, should end with /upload')
+
+action = parser.add_argument_group('Action').add_mutually_exclusive_group()
+action.add_argument('--file', type=argparse.FileType('rb'), help='Upload the specified file to Firefox Send')
+action.add_argument('--url', type=str, help='Download a file with a Send link')
+
+parser.add_argument('input', nargs='?', help='Uploads or downloads a file specified by path or url, no other options requried')
+
+args = parser.parse_args()
+
+# Set the service url to local/dev/stage/pro or other, there should be a cleaner way of doing this
+service = args.altservice or args.service
+
+def case_url(url):
+   print('Downloading ' + url)
+   data, filename, key, iv = get(url)
+   filename = input('Press enter to save to "' + filename + '", or specify a new name now: ') or filename
+
+   print('Decrypting to "' + filename + '"')
+   with open(filename, 'wb') as f:
+      f.write(decrypt(data,key,iv))
+   print("Done.")
+
+
+def case_file(file):
+   #file.name is a file path
+   filename = basename(file.name)
+
+   print('Encrypting data from "' + file.name + '"')
+   data, key, iv = encrypt(file)
+
+   print('Uploading "' + filename + '"')
+   link = put(args.service,data,filename,iv)
+
+   print('File Uploaded, use the following link to retrieve it')
+   print(link['url'] + '#' + key)
+
+if args.url:
+   case_url(args.url)
+elif args.file:
+   case_file(args.file)
+elif args.input:
+   '''determine if the input is a file or a url'''
+   if exists(args.input):
+      # upload
+      case_file( open(args.input, 'rb') )
+   else:
+      #download
+      case_url(args.input)
+
+else:
+   parser.print_usage()
+   sys.exit(1)
+
+sys.exit(0)
