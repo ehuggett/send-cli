@@ -13,7 +13,7 @@ parser = argparse.ArgumentParser(description='Unofficial (Firefox) Send client')
 
 service = parser.add_argument_group('Set the Send service to used').add_mutually_exclusive_group()
 service.add_argument('--service-local', dest='altservice', action='store_const', const='http://localhost:1443/upload', help='Use a Send service at http://localhost:1443/upload')
-service.add_argument('--service-dev', dest='altservice', action='store_const', const='https://send.dev.mozaws.net/', help='Use the Send development server for upload')
+service.add_argument('--service-dev', dest='altservice', action='store_const', const='https://send.dev.mozaws.net/upload', help='Use the Send development server for upload')
 service.add_argument('--service-stage', dest='altservice', action='store_const', const='https://send.stage.mozaws.net/upload', help='Use the Send staging server for upload')
 service.add_argument('--service-live', dest='altservice', action='store_const', const='https://send.firefox.com/upload', help='Use the Send production server for upload (Default)')
 service.add_argument('--service', type=str, default='https://send.firefox.com/upload', help='Specify the url of a Send service to use for upload, should end with /upload')
@@ -48,7 +48,7 @@ def case_file(file):
    data, key, iv = encrypt(file)
 
    print('Uploading "' + filename + '"')
-   link = put(args.service,data,filename,iv)
+   link = put(service,data,filename,iv)
 
    print('File Uploaded, use the following link to retrieve it')
    print(link['url'] + '#' + key)
