@@ -23,7 +23,7 @@ action = parser.add_argument_group('Action').add_mutually_exclusive_group()
 action.add_argument('--file', type=argparse.FileType('rb'), help='Upload the specified file to Firefox Send')
 action.add_argument('--url', type=str, help='Download a file with a Send link')
 
-parser.add_argument('input', nargs='?', help='Uploads or downloads a file specified by path or url, no other options requried')
+parser.add_argument('input', nargs='?', help='Uploads or downloads a file specified by path or url, no other options required')
 
 args = parser.parse_args()
 
