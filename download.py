@@ -4,6 +4,9 @@ import json
 from urllib.parse import unquote_plus
 from Cryptodome.Cipher import AES
 from base64 import urlsafe_b64decode
+from tempfile import SpooledTemporaryFile, NamedTemporaryFile
+
+from common import *
 
 def splitkeyurl(url):
    '''
@@ -25,29 +28,51 @@ def key_decode(jwk):
 def get(url):
    '''Given a Send url, download and return the encrypted data and metadata'''
    prefix, urlid, key = splitkeyurl(url)
+   data = SpooledTemporaryFile(max_size=SPOOL_SIZE, mode='w+b')
 
-   r = requests.get(prefix + 'assets/download/' + urlid)
-   data = r.content
-
+   r = requests.get(prefix + 'assets/download/' + urlid, stream=True)
+   r.raise_for_status()
+   content_length = int(r.headers['Content-length'])
    meta = json.loads(r.headers['X-File-Metadata'])
    filename = unquote_plus(meta['filename'])
    iv = meta['id']
 
-   return data, filename, key, iv
-
-
-def decrypt(data,key,iv):
-   '''Decrypts a file from Send'''
-   key = key_decode(key)
-   iv = bytes.fromhex(iv)
+   pbar = progbar(content_length)
+   for chunk in r.iter_content(chunk_size=CHUNK_SIZE):
+      data.write(chunk)
+      pbar.update(len(chunk))
+   pbar.close()
 
    # The last 16 bytes / 128 bits of data is the GCM tag
    # https://www.w3.org/TR/WebCryptoAPI/#aes-gcm-operations :-
    # 7. Let ciphertext be equal to C | T, where '|' denotes concatenation.
-   tag = data[-16:]
-   data = data[:-16]
+   data.seek(-16,2)
+   tag = data.read()
+
+   # now truncate the file to only contain encrypted data
+   data.seek(-16,2)
+   data.truncate()
+
+   data.seek(0)
+   return data, filename, key, iv, tag
+
+def decrypt(data,key,iv,tag):
+   '''Decrypts a file from Send'''
+   key = key_decode(key)
+   iv = bytes.fromhex(iv)
+   plain = NamedTemporaryFile(mode='w+b', delete=False)
+
+   pbar = progbar(fileSize(data))
 
    obj = AES.new(key, AES.MODE_GCM, iv)
-   data = obj.decrypt_and_verify(data,tag)
+   prev_chunk = b''
+   for chunk in iter(lambda: data.read(CHUNK_SIZE), b''):
+      plain.write(obj.decrypt(prev_chunk))
+      pbar.update(len(chunk))
+      prev_chunk = chunk
 
-   return(data)
+   plain.write(obj.decrypt_and_verify(prev_chunk,tag))
+   data.close()
+   pbar.close()
+
+   return(plain)
