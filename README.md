@@ -1,6 +1,8 @@
 # send-cli
 Unofficial command line (Firefox) Send client
 
+![tty_crop](https://user-images.githubusercontent.com/8090731/30059626-c1daf4d4-9237-11e7-97a1-0f53456a293c.gif)
+
 Warning, Sharp Edges!
 - will overwrite the output file without warning, but does prompt for the output filename
 - Uses temp files to avoid using large amount of memory, you will need at least 2GB of free disk space to upload a 2GB file
