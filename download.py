@@ -30,7 +30,7 @@ def get(url):
    prefix, urlid, key = splitkeyurl(url)
    data = SpooledTemporaryFile(max_size=SPOOL_SIZE, mode='w+b')
 
-   r = requests.get(prefix + 'assets/download/' + urlid, stream=True)
+   r = requests.get(prefix + 'api/download/' + urlid, stream=True)
    r.raise_for_status()
    content_length = int(r.headers['Content-length'])
    meta = json.loads(r.headers['X-File-Metadata'])
