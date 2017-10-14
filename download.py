@@ -79,4 +79,5 @@ def decrypt(data,key,iv,tag):
    data.close()
    pbar.close()
 
+   plain.seek(0)
    return(plain)
