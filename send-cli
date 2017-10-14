@@ -25,6 +25,8 @@ action.add_argument('--url', type=str, help='Download a file with a Send link')
 
 parser.add_argument('input', nargs='?', help='Uploads or downloads a file specified by path or url, no other options required')
 
+parser.add_argument('--ignore-version', help='Disable server version checks (MAY CAUSE LOSS OF DATA)', action='store_true')
+
 args = parser.parse_args()
 
 # Set the service url to local/dev/stage/pro or other, there should be a cleaner way of doing this
@@ -32,7 +34,7 @@ service = args.altservice or args.service
 
 def case_url(url):
    print('Downloading ' + url)
-   data, filename, key, iv, tag = get(url)
+   data, filename, key, iv, tag = get(url, args.ignore_version)
    filename = input('Press enter to save to "' + filename + '", or specify a new name now: ') or filename
 
    print('Decrypting to "' + filename + '"')

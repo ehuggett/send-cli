@@ -25,9 +25,13 @@ def key_decode(jwk):
    raw = urlsafe_b64decode(jwk.encode('utf-8'))
    return raw
 
-def get(url):
+def get(url, ignoreVersion=False):
    '''Given a Send url, download and return the encrypted data and metadata'''
    prefix, urlid, key = splitkeyurl(url)
+
+   if checkServerVersion(prefix, ignoreVersion) == False:
+      raise Exception('Potentially incompatible server version, use --ignore-version to disable version checks')
+
    data = SpooledTemporaryFile(max_size=SPOOL_SIZE, mode='w+b')
 
    r = requests.get(prefix + 'api/download/' + urlid, stream=True)

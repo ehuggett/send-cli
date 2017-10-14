@@ -45,6 +45,10 @@ def put(service,data,filename,iv):
       Uploads data to Send.
       Caution! Data is uploaded as given, this function will not encrypt it for you
    '''
+
+   if checkServerVersion( service.replace('api/upload','') ) == False:
+      print('\033[1;41m!!! Potentially incompatible server version !!!\033[0m')
+
    filename = quote_plus(filename)
    #nb the Content-Type is also "public" metadata
    files = MultipartEncoder(fields={'file': (filename, data, 'application/octet-stream') } )
