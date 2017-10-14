@@ -24,7 +24,7 @@ $ ./send-cli -h
 !!! Experimental/alpha quality suitable for testing at your own risk only !!!
 usage: send-cli [-h]
                 [--service-local | --service-dev | --service-stage | --service-live | --service SERVICE]
-                [--file FILE | --url URL]
+                [--file FILE | --url URL] [--ignore-version]
                 [input]
 
 Unofficial (Firefox) Send client
@@ -35,14 +35,15 @@ positional arguments:
 
 optional arguments:
   -h, --help         show this help message and exit
+  --ignore-version   Disable server version checks (MAY CAUSE LOSS OF DATA)
 
 Set the Send service to used:
-  --service-local    Use a Send service at http://localhost:1443/upload
+  --service-local    Use a Send service at http://localhost:1443/api/upload
   --service-dev      Use the Send development server for upload
   --service-stage    Use the Send staging server for upload
   --service-live     Use the Send production server for upload (Default)
   --service SERVICE  Specify the url of a Send service to use for upload,
-                     should end with /upload
+                     should end with /api/upload
 
 Action:
   --file FILE        Upload the specified file to Firefox Send
