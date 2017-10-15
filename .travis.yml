@@ -11,4 +11,4 @@ install:
 
 script:
   - pytest
-  - python send-cli -h
+  - send-cli -h
