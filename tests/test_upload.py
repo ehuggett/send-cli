@@ -1,18 +1,18 @@
-from upload import jwk_encode
+from sendclient.upload import jwk_encode
 def test_jwk_encode():
    key = b'\xdf\xd1\x0b\xed+\xaa\xc1cX{\x82\x12\x97c4\xea'
    assert jwk_encode(key) == '39EL7SuqwWNYe4ISl2M06g'
 
-from upload import encrypt
+from sendclient.upload import encrypt
 from hashlib import sha256
-def test_encrypt(monkeypatch):
+def test_encrypt(monkeypatch, testdata_1M):
    def mockrandom(number_of_bytes):
       return b'\x81\xbe^\t\xc1\x11Wa\x03\xa8PvX\xd4x\x91'[:number_of_bytes]
 
    # use the same 'random' bytes every time (for encryption key and IV)
-   monkeypatch.setattr('upload.get_random_bytes', mockrandom)
+   monkeypatch.setattr('sendclient.upload.get_random_bytes', mockrandom)
 
-   fh = open('tests/data/1M', 'rb')
+   fh = open(str(testdata_1M), 'rb')
    ciphertext,key,iv = encrypt(fh)
 
    assert key == 'gb5eCcERV2EDqFB2WNR4kQ'
