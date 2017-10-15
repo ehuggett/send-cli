@@ -8,7 +8,7 @@ from tempfile import SpooledTemporaryFile
 from urllib.parse import quote_plus
 from requests_toolbelt import MultipartEncoder, MultipartEncoderMonitor
 
-from common import *
+from sendclient.common import *
 
 def jwk_encode(key):
    '''base64 encode with url safe alphabet and strip padding'''

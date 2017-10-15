@@ -6,7 +6,7 @@ from Cryptodome.Cipher import AES
 from base64 import urlsafe_b64decode
 from tempfile import SpooledTemporaryFile, NamedTemporaryFile
 
-from common import *
+from sendclient.common import *
 
 def splitkeyurl(url):
    '''
