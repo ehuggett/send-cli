@@ -1,12 +1,12 @@
 from setuptools import setup
 setup(
-   name='send-client',
+   name='sendclient',
    version=0.1,
    description='Unofficial Firefox Send client',
    long_description='Command-line client to upload and download encrypted files from a Send server such as https://send.firefox.com',
    url='https://github.com/ehuggett/send-cli',
    author='Edmund Huggett',
-   author_email='edmundhuggett@fsfe.org',
+   author_email='edmund.huggett@fsfe.org',
    packages=['sendclient'],
    classifiers=[
         'Topic :: Communications :: File Sharing',
