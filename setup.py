@@ -8,6 +8,13 @@ setup(
    author='Edmund Huggett',
    author_email='edmund.huggett@fsfe.org',
    packages=['sendclient'],
+   install_requires=[
+      'pycryptodomex',
+      'requests',
+      'requests-toolbelt',
+      'tqdm',
+      'urllib3'
+   ],
    classifiers=[
         'Topic :: Communications :: File Sharing',
         'Development Status :: 3 - Alpha',
