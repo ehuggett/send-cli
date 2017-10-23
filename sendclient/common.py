@@ -24,7 +24,7 @@ def fileSize(f):
     f.seek(0, 2)
     size = f.tell()
 
-    f.seek(offset) # return to the previous position in the file
+    f.seek(offset)  # return to the previous position in the file
     return size
 
 def progbar(total):

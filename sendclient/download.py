@@ -16,7 +16,7 @@ def splitkeyurl(url):
     key = url[-22:]
     urlid = url[-34:-24]
     prefix = url[:-43]
-    return prefix,urlid,key
+    return prefix, urlid, key
 
 def key_decode(jwk):
     """given the key from the Send URL returns the raw aes key"""
@@ -50,17 +50,17 @@ def get(url, ignoreVersion=False):
     # The last 16 bytes / 128 bits of data is the GCM tag
     # https://www.w3.org/TR/WebCryptoAPI/#aes-gcm-operations :-
     # 7. Let ciphertext be equal to C | T, where '|' denotes concatenation.
-    data.seek(-16,2)
+    data.seek(-16, 2)
     tag = data.read()
 
     # now truncate the file to only contain encrypted data
-    data.seek(-16,2)
+    data.seek(-16, 2)
     data.truncate()
 
     data.seek(0)
     return data, filename, key, iv, tag
 
-def decrypt(data,key,iv,tag):
+def decrypt(data, key, iv, tag):
     '''Decrypts a file from Send'''
     key = key_decode(key)
     iv = bytes.fromhex(iv)
@@ -75,7 +75,7 @@ def decrypt(data,key,iv,tag):
         pbar.update(len(chunk))
         prev_chunk = chunk
 
-    plain.write(obj.decrypt_and_verify(prev_chunk,tag))
+    plain.write(obj.decrypt_and_verify(prev_chunk, tag))
     data.close()
     pbar.close()
 

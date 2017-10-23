@@ -13,7 +13,7 @@ from sendclient.common import *
 def jwk_encode(key):
     '''base64 encode with url safe alphabet and strip padding'''
     jwk = urlsafe_b64encode(key)
-    jwk = jwk.decode('utf-8').replace('=','')
+    jwk = jwk.decode('utf-8').replace('=', '')
     return jwk
 
 def encrypt(fh):
@@ -25,33 +25,33 @@ def encrypt(fh):
 
     pbar = progbar(fileSize(fh))
 
-    for chunk in iter(lambda: fh.read(CHUNK_SIZE), b'' ):
+    for chunk in iter(lambda: fh.read(CHUNK_SIZE), b''):
         ciphertext.write(cipher.encrypt(chunk))
         pbar.update(len(chunk))
 
     pbar.close()
-    ciphertext.write( cipher.digest() )
+    ciphertext.write(cipher.digest())
     fh.close()
 
     key = jwk_encode(key)
     iv = iv.hex()
     ciphertext.seek(0)
 
-    return ciphertext,key,iv
+    return ciphertext, key, iv
 
 
-def put(service,data,filename,iv):
+def put(service, data, filename, iv):
     '''
        Uploads data to Send.
        Caution! Data is uploaded as given, this function will not encrypt it for you
     '''
 
-    if checkServerVersion( service.replace('api/upload','') ) == False:
+    if checkServerVersion(service.replace('api/upload', '')) == False:
         print('\033[1;41m!!! Potentially incompatible server version !!!\033[0m')
 
     filename = quote_plus(filename)
-    #nb the Content-Type is also "public" metadata
-    files = MultipartEncoder(fields={'file': (filename, data, 'application/octet-stream') } )
+    # nb the Content-Type is also "public" metadata
+    files = MultipartEncoder(fields={'file': (filename, data, 'application/octet-stream') })
     pbar = progbar(files.len)
     monitor = MultipartEncoderMonitor(files, lambda files: pbar.update(monitor.bytes_read - pbar.n))
 
