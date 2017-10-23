@@ -33,45 +33,45 @@ args = parser.parse_args()
 service = args.altservice or args.service
 
 def case_url(url):
-   print('Downloading ' + url)
-   data, filename, key, iv, tag = get(url, args.ignore_version)
-   filename = input('Press enter to save to "' + filename + '", or specify a new name now: ') or filename
+    print('Downloading ' + url)
+    data, filename, key, iv, tag = get(url, args.ignore_version)
+    filename = input('Press enter to save to "' + filename + '", or specify a new name now: ') or filename
 
-   print('Decrypting to "' + filename + '"')
-   tmpfile = decrypt(data,key,iv,tag)
-   rename(tmpfile.name,filename)
-   print("Done.")
+    print('Decrypting to "' + filename + '"')
+    tmpfile = decrypt(data,key,iv,tag)
+    rename(tmpfile.name,filename)
+    print("Done.")
 
 
 def case_file(file):
-   #file.name is a file path
-   filename = basename(file.name)
+    #file.name is a file path
+    filename = basename(file.name)
 
-   print('Encrypting data from "' + file.name + '"')
-   data, key, iv = encrypt(file)
+    print('Encrypting data from "' + file.name + '"')
+    data, key, iv = encrypt(file)
 
-   print('Uploading "' + filename + '"')
-   link = put(service,data,filename,iv)
+    print('Uploading "' + filename + '"')
+    link = put(service,data,filename,iv)
 
-   print('File Uploaded, use the following link to retrieve it')
-   print(link['url'] + '#' + key)
+    print('File Uploaded, use the following link to retrieve it')
+    print(link['url'] + '#' + key)
 
 if args.url:
-   case_url(args.url)
+    case_url(args.url)
 elif args.file:
-   case_file(args.file)
+    case_file(args.file)
 elif args.input:
-   '''determine if the input is a file or a url'''
-   if exists(args.input):
-      # upload
-      # TODO ask for confirmation (as --upload was not specified)
-      case_file( open(args.input, 'rb') )
-   else:
-      #download
-      case_url(args.input)
+    '''determine if the input is a file or a url'''
+    if exists(args.input):
+        # upload
+        # TODO ask for confirmation (as --upload was not specified)
+        case_file( open(args.input, 'rb') )
+    else:
+        #download
+        case_url(args.input)
 
 else:
-   parser.print_usage()
-   sys.exit(1)
+    parser.print_usage()
+    sys.exit(1)
 
 sys.exit(0)
