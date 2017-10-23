@@ -29,3 +29,54 @@ def fileSize(f):
 
 def progbar(total):
     return tqdm(unit='B', unit_scale=True, total=total)
+
+
+import Cryptodome.Hash
+import Cryptodome.Protocol.KDF
+import Cryptodome.Random
+
+class secretKeys:
+    def __init__(self, secretKey=None, password=None, url=None):
+        self.secretKey = secretKey if secretKey is not None else self.randomSecretKey()
+        self.encryptKey = self.deriveEncryptKey()
+        self.authKey = self.deriveAuthKey()
+        self.metaKey = self.deriveMetaKey()
+        if password != None and url != None:
+            self.deriveNewAuthKey(password, url)
+
+    def randomSecretKey(self):
+        return Cryptodome.Random.get_random_bytes(16)
+
+    def deriveEncryptKey(self):
+        master = self.secretKey
+        key_len = 16
+        salt = b''
+        hashmod = Cryptodome.Hash.SHA256
+        num_keys = 1
+        context = b'encryption'
+        return Cryptodome.Protocol.KDF.HKDF(master, key_len, salt, hashmod, num_keys=num_keys, context=context)
+
+    def deriveAuthKey(self):
+        master = self.secretKey
+        key_len = 64
+        salt = b''
+        hashmod = Cryptodome.Hash.SHA256
+        num_keys = 1
+        context = b'authentication'
+        return Cryptodome.Protocol.KDF.HKDF(master, key_len, salt, hashmod, num_keys=num_keys, context=context)
+
+    def deriveMetaKey(self):
+        master = self.secretKey
+        key_len = 16
+        salt = b''
+        hashmod = Cryptodome.Hash.SHA256
+        num_keys = 1
+        context = b'metadata'
+        return Cryptodome.Protocol.KDF.HKDF(master, key_len, salt, hashmod, num_keys=num_keys, context=context)
+
+    def deriveNewAuthKey(self, password, url):
+        self.password = password
+        self.url = url
+        hmac_sha256 = lambda key,msg: Cryptodome.Hash.HMAC.new(key, msg, Cryptodome.Hash.SHA256).digest()
+        self.newAuthKey = Cryptodome.Protocol.KDF.PBKDF2(password.encode('utf8'), url.encode('utf8'), dkLen=64, count=100, prf=hmac_sha256 )
+        return self.newAuthKey
