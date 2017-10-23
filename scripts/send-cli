@@ -38,20 +38,20 @@ def case_url(url):
     filename = input('Press enter to save to "' + filename + '", or specify a new name now: ') or filename
 
     print('Decrypting to "' + filename + '"')
-    tmpfile = decrypt(data,key,iv,tag)
-    rename(tmpfile.name,filename)
+    tmpfile = decrypt(data, key, iv, tag)
+    rename(tmpfile.name, filename)
     print("Done.")
 
 
 def case_file(file):
-    #file.name is a file path
+    # file.name is a file path
     filename = basename(file.name)
 
     print('Encrypting data from "' + file.name + '"')
     data, key, iv = encrypt(file)
 
     print('Uploading "' + filename + '"')
-    link = put(service,data,filename,iv)
+    link = put(service, data, filename, iv)
 
     print('File Uploaded, use the following link to retrieve it')
     print(link['url'] + '#' + key)
@@ -65,9 +65,9 @@ elif args.input:
     if exists(args.input):
         # upload
         # TODO ask for confirmation (as --upload was not specified)
-        case_file( open(args.input, 'rb') )
+        case_file(open(args.input, 'rb'))
     else:
-        #download
+        # download
         case_url(args.input)
 
 else:
