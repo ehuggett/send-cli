@@ -1,9 +1,3 @@
-from sendclient.common import checkServerVersion
-def test_checkServerVersion():
-   service = 'https://send.firefox.com/'
-   ignoreVersion = False
-   assert checkServerVersion(service, ignoreVersion) == True
-
 from sendclient.common import fileSize
 def test_fileSize(testdata_1M):
    # open the test file and move the pointer to check fileSize() does not change it
