@@ -4,6 +4,7 @@ SPOOL_SIZE = 16 * 1024 * 1024
 
 from tqdm import tqdm
 import requests
+import base64
 
 def checkServerVersion(service, ignoreVersion=False):
     if ignoreVersion == True:
@@ -30,6 +31,13 @@ def fileSize(f):
 def progbar(total):
     return tqdm(unit='B', unit_scale=True, total=total)
 
+def unpadded_urlsafe_b64encode(b):
+    ''' base64 encode bytes with url-safe alphabet and strip padding '''
+    return base64.urlsafe_b64encode(b).decode().replace('=','')
+
+def unpadded_urlsafe_b64decode(s):
+    ''' Decode url-safe base64 string, with or without padding, to bytes'''
+    return base64.urlsafe_b64decode(s + '=' * (4 - len(s) % 4))
 
 import Cryptodome.Hash
 import Cryptodome.Protocol.KDF
