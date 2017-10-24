@@ -15,7 +15,7 @@ def test_encrypt_file(testdata_1M):
     mock_keys = mock_secretKeys()
 
     file = open(str(testdata_1M), 'rb')
-    encData, keys = encrypt_file(file, mock_keys)
+    encData = encrypt_file(file, mock_keys)
 
     # The pointer should be at the beginning of the file
     assert encData.tell() == 0
