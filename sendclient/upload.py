@@ -1,5 +1,6 @@
 import json
 import requests
+import os
 
 from Cryptodome.Cipher import AES
 from Cryptodome.Random import get_random_bytes
@@ -91,3 +92,21 @@ def set_password(service, keys, url, fileId, password, nonce):
     headers = {'Authorization' : 'send-v1 ' + jwk_encode(sig) }
     r = requests.post(service, json={'auth' :jwk_encode(newAuthKey) }, headers=headers )
     r.raise_for_status()
+
+def send_file(service, file, fileName=None, password=None, silent=False):
+    ''' Encrypt & Upload a file to send and return the download URL'''
+    fileName = fileName if fileName != None else os.path.basename(file.name)
+
+    print('Encrypting data from "' + file.name + '"')
+    keys = secretKeys()
+    encData= encrypt_file(file, keys)
+    encMeta = encrypt_metadata(keys, fileName)
+
+    print('Uploading "' + fileName + '"')
+    secretUrl, fileId, fileNonce = put(service, encData, encMeta, keys)
+
+    if password != None:
+        print('Setting password')
+        set_password(service, keys, secretUrl, fileId, password, fileNonce)
+
+    return secretUrl
