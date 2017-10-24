@@ -11,7 +11,7 @@ def test_fileSize(testdata_1M):
         assert f.tell() == 123
 
 from sendclient.common import secretKeys
-def test_known_good_keys():
+def test_secretKeys_known_good_keys():
     # test data was obtained by adding debug messages to {"commit":"188b28f","source":"https://github.com/mozilla/send/","version":"v1.2.4"}
     testdata = {
         'secretKey': b'q\xd94B\xa1&\x03\xa5<8\xddk\xee.\xea&',
@@ -22,7 +22,10 @@ def test_known_good_keys():
         'url': 'http://192.168.254.87:1443/download/fa4cd959de/#cdk0QqEmA6U8ON1r7i7qJg',
         'newAuthKey': b'U\x02F\x19\x1b\xc1W\x03q\x86q\xbc\xe7\x84WB\xa7(\x0f\x8a\x0f\x17\\\xb9y\xfaZT\xc1\xbf\xb2\xd48\x82\xa7\t\x9a\xb1\x1e{cg\n\xc6\x995+\x0f\xd3\xf4\xb3kd\x93D\xca\xf9\xa1(\xdf\xcb_^\xa3',
     }
+    # generate all keys
     keys = secretKeys(secretKey=testdata['secretKey'], password=testdata['password'], url=testdata['url'])
+
+    # Check every key has the expected value
     assert keys.secretKey == testdata['secretKey']
     assert keys.encryptKey == testdata['encryptKey']
     assert keys.authKey == testdata['authKey']
@@ -30,3 +33,13 @@ def test_known_good_keys():
     assert keys.password == testdata['password']
     assert keys.url == testdata['url']
     assert keys.newAuthKey == testdata['newAuthKey']
+
+def test_secretKeys_random_key_lengths():
+    # test key generation without providing the master secretKey
+    keys = secretKeys()
+    assert len(keys.secretKey) == 16
+    assert len(keys.encryptKey) == 16
+    assert len(keys.encryptIV) == 12
+    assert len(keys.authKey) == 64
+    assert len(keys.metaKey) == 16
+    assert len(keys.deriveNewAuthKey('drowssap', 'https://send.server/download/aFileID/#someSecretKey' )) == 64

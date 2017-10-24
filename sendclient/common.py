@@ -39,6 +39,7 @@ class secretKeys:
     def __init__(self, secretKey=None, password=None, url=None):
         self.secretKey = secretKey if secretKey is not None else self.randomSecretKey()
         self.encryptKey = self.deriveEncryptKey()
+        self.encryptIV = self.randomEncryptIV()
         self.authKey = self.deriveAuthKey()
         self.metaKey = self.deriveMetaKey()
         if password != None and url != None:
@@ -46,6 +47,9 @@ class secretKeys:
 
     def randomSecretKey(self):
         return Cryptodome.Random.get_random_bytes(16)
+
+    def randomEncryptIV(self):
+        return Cryptodome.Random.get_random_bytes(12)
 
     def deriveEncryptKey(self):
         master = self.secretKey
@@ -77,6 +81,6 @@ class secretKeys:
     def deriveNewAuthKey(self, password, url):
         self.password = password
         self.url = url
-        hmac_sha256 = lambda key,msg: Cryptodome.Hash.HMAC.new(key, msg, Cryptodome.Hash.SHA256).digest()
-        self.newAuthKey = Cryptodome.Protocol.KDF.PBKDF2(password.encode('utf8'), url.encode('utf8'), dkLen=64, count=100, prf=hmac_sha256 )
+        hmac_sha256 = lambda key, msg: Cryptodome.Hash.HMAC.new(key, msg, Cryptodome.Hash.SHA256).digest()
+        self.newAuthKey = Cryptodome.Protocol.KDF.PBKDF2(password.encode('utf8'), url.encode('utf8'), dkLen=64, count=100, prf=hmac_sha256)
         return self.newAuthKey
