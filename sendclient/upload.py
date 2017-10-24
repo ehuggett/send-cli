@@ -2,23 +2,20 @@ import json
 import requests
 import os
 
-from Cryptodome.Cipher import AES
-from Cryptodome.Random import get_random_bytes
+import Cryptodome.Cipher.AES
 import Cryptodome.Hash.HMAC
 import Cryptodome.Hash.SHA256
-from base64 import urlsafe_b64encode, urlsafe_b64decode
 from tempfile import SpooledTemporaryFile
-from urllib.parse import quote_plus
 from requests_toolbelt import MultipartEncoder, MultipartEncoderMonitor
 
-from sendclient.common import *
+from sendclient.common import unpadded_urlsafe_b64encode,unpadded_urlsafe_b64decode, secretKeys, SPOOL_SIZE, CHUNK_SIZE, checkServerVersion, progbar, fileSize
 
 def encrypt_file(file, keys=secretKeys()):
     '''Encrypt file data with the same method as the Send browser/js client'''
     key = keys.encryptKey
     iv = keys.encryptIV
     encData = SpooledTemporaryFile(max_size=SPOOL_SIZE, mode='w+b')
-    cipher = AES.new(key, AES.MODE_GCM, iv)
+    cipher = Cryptodome.Cipher.AES.new(key, Cryptodome.Cipher.AES.MODE_GCM, iv)
 
     pbar = progbar(fileSize(file))
 
@@ -37,7 +34,7 @@ def encrypt_metadata(keys, fileName, fileType='application/octet-stream'):
     '''Encrypt file metadata with the same method as the Send browser/js client'''
     metadata = json.dumps({'iv' : unpadded_urlsafe_b64encode(keys.encryptIV), 'name' : fileName, 'type' : fileType}).encode('utf8')
 
-    cipher = AES.new(keys.metaKey, AES.MODE_GCM, keys.metaIV)
+    cipher = Cryptodome.Cipher.AES.new(keys.metaKey, Cryptodome.Cipher.AES.MODE_GCM, keys.metaIV)
     encMeta, gcmTag = cipher.encrypt_and_digest(metadata)
 
     # WebcryptoAPI expects the gcm tag at the end of the ciphertext, return them concatenated
@@ -69,7 +66,7 @@ def put(service, encData, encMeta, keys):
     bodyJson = r.json()
     secretUrl = bodyJson['url'] + '#' + unpadded_urlsafe_b64encode(keys.secretKey)
     fileId = bodyJson['id']
-    fileNonce = urlsafe_b64decode(r.headers['WWW-Authenticate'].replace('send-v1 ','') + '==')
+    fileNonce = unpadded_urlsafe_b64decode(r.headers['WWW-Authenticate'].replace('send-v1 ',''))
     return secretUrl, fileId, fileNonce
 
 def sign_nonce(key, nonce):
