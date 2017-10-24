@@ -42,6 +42,7 @@ class secretKeys:
         self.encryptIV = self.randomEncryptIV()
         self.authKey = self.deriveAuthKey()
         self.metaKey = self.deriveMetaKey()
+        self.metaIV = bytes(12) # Send uses a 12 byte all-zero IV when encrypting metadata
         if password != None and url != None:
             self.deriveNewAuthKey(password, url)
 

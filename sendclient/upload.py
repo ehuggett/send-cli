@@ -16,29 +16,35 @@ def jwk_encode(key):
     jwk = jwk.decode('utf-8').replace('=', '')
     return jwk
 
-def encrypt(fh):
-    '''Encrypt data with the same method as the Send browser/js client'''
-    key = get_random_bytes(16)
-    iv = get_random_bytes(12)
-    ciphertext = SpooledTemporaryFile(max_size=SPOOL_SIZE, mode='w+b')
+def encrypt_file(file, keys=secretKeys()):
+    '''Encrypt file data with the same method as the Send browser/js client'''
+    key = keys.encryptKey
+    iv = keys.encryptIV
+    encData = SpooledTemporaryFile(max_size=SPOOL_SIZE, mode='w+b')
     cipher = AES.new(key, AES.MODE_GCM, iv)
 
-    pbar = progbar(fileSize(fh))
+    pbar = progbar(fileSize(file))
 
-    for chunk in iter(lambda: fh.read(CHUNK_SIZE), b''):
-        ciphertext.write(cipher.encrypt(chunk))
+    for chunk in iter(lambda: file.read(CHUNK_SIZE), b''):
+        encData.write(cipher.encrypt(chunk))
         pbar.update(len(chunk))
 
     pbar.close()
-    ciphertext.write(cipher.digest())
-    fh.close()
+    encData.write(cipher.digest())
+    file.close()
 
-    key = jwk_encode(key)
-    iv = iv.hex()
-    ciphertext.seek(0)
+    encData.seek(0)
+    return encData, keys
 
-    return ciphertext, key, iv
+def encrypt_metadata(keys, fileName, fileType='application/octet-stream'):
+    '''Encrypt file metadata with the same method as the Send browser/js client'''
+    metadata = json.dumps({'iv' : jwk_encode(keys.encryptIV), 'name' : fileName, 'type' : fileType}).encode('utf8')
 
+    cipher = AES.new(keys.metaKey, AES.MODE_GCM, keys.metaIV)
+    encMeta, gcmTag = cipher.encrypt_and_digest(metadata)
+
+    # WebcryptoAPI expects the gcm tag at the end of the ciphertext, return them concatenated
+    return encMeta + gcmTag
 
 def put(service, data, filename, iv):
     '''
