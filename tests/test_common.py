@@ -10,6 +10,16 @@ def test_fileSize(testdata_1M):
         # check the pointer has not moved
         assert f.tell() == 123
 
+from sendclient.common import unpadded_urlsafe_b64encode
+def test_unpadded_urlsafe_b64encode():
+    key = b'\xdf\xd1\x0b\xed+\xaa\xc1cX{\x82\x12\x97c4\xea'
+    assert unpadded_urlsafe_b64encode(key) == '39EL7SuqwWNYe4ISl2M06g'
+
+from sendclient.common import unpadded_urlsafe_b64decode
+def test_unpadded_urlsafe_b64decode():
+    jwk = '39EL7SuqwWNYe4ISl2M06g'
+    assert unpadded_urlsafe_b64decode(jwk) == b'\xdf\xd1\x0b\xed+\xaa\xc1cX{\x82\x12\x97c4\xea'
+
 from sendclient.common import secretKeys
 def test_secretKeys_known_good_keys():
     # test data was obtained by adding debug messages to {"commit":"188b28f","source":"https://github.com/mozilla/send/","version":"v1.2.4"}
