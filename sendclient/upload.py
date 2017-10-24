@@ -34,7 +34,7 @@ def encrypt_file(file, keys=secretKeys()):
     file.close()
 
     encData.seek(0)
-    return encData, keys
+    return encData
 
 def encrypt_metadata(keys, fileName, fileType='application/octet-stream'):
     '''Encrypt file metadata with the same method as the Send browser/js client'''
@@ -46,7 +46,7 @@ def encrypt_metadata(keys, fileName, fileType='application/octet-stream'):
     # WebcryptoAPI expects the gcm tag at the end of the ciphertext, return them concatenated
     return encMeta + gcmTag
 
-def put(service, data, filename, iv):
+def put(service, encData, encMeta, keys):
     '''
        Uploads data to Send.
        Caution! Data is uploaded as given, this function will not encrypt it for you
@@ -55,16 +55,17 @@ def put(service, data, filename, iv):
     if checkServerVersion(service.replace('api/upload', '')) == False:
         print('\033[1;41m!!! Potentially incompatible server version !!!\033[0m')
 
-    filename = quote_plus(filename)
-    # nb the Content-Type is also "public" metadata
-    files = MultipartEncoder(fields={'file': (filename, data, 'application/octet-stream') })
+    files = MultipartEncoder(fields={'file': ('blob', encData, 'application/octet-stream') })
     pbar = progbar(files.len)
     monitor = MultipartEncoderMonitor(files, lambda files: pbar.update(monitor.bytes_read - pbar.n))
 
-    public_meta = {'filename' : filename, 'id': iv }
-    headers = {'X-File-Metadata' : json.dumps(public_meta), 'Content-type' : monitor.content_type}
+    headers = {
+        'X-File-Metadata' : jwk_encode(encMeta),
+        'Authorization' : 'send-v1 ' + jwk_encode(keys.authKey),
+        'Content-type' : monitor.content_type
+    }
 
     r = requests.post(service, data=monitor, headers=headers, stream=True)
     r.raise_for_status()
     pbar.close()
-    return r.json()
+    return r.json()['url'] + '#' + jwk_encode(keys.secretKey)
