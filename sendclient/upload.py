@@ -32,10 +32,10 @@ def encrypt_file(file, keys=secretKeys()):
 
 def encrypt_metadata(keys, fileName, fileType='application/octet-stream'):
     '''Encrypt file metadata with the same method as the Send browser/js client'''
-    metadata = json.dumps({'iv' : unpadded_urlsafe_b64encode(keys.encryptIV), 'name' : fileName, 'type' : fileType}).encode('utf8')
+    metadata = json.dumps({'iv' : unpadded_urlsafe_b64encode(keys.encryptIV), 'name' : fileName, 'type' : fileType}, sort_keys=True)
 
     cipher = Cryptodome.Cipher.AES.new(keys.metaKey, Cryptodome.Cipher.AES.MODE_GCM, keys.metaIV)
-    encMeta, gcmTag = cipher.encrypt_and_digest(metadata)
+    encMeta, gcmTag = cipher.encrypt_and_digest(metadata.encode())
 
     # WebcryptoAPI expects the gcm tag at the end of the ciphertext, return them concatenated
     return encMeta + gcmTag
