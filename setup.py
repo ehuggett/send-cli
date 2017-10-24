@@ -7,7 +7,9 @@ setup(
    url='https://github.com/ehuggett/send-cli',
    author='Edmund Huggett',
    author_email='edmund.huggett@fsfe.org',
+   license='GNU General Public License v3 or later (GPLv3+)',
    packages=['sendclient'],
+   scripts =  ['scripts/send-cli'],
    install_requires=[
       'pycryptodomex',
       'requests',
@@ -15,6 +17,8 @@ setup(
       'tqdm',
       'urllib3'
    ],
+   setup_requires=['pytest-runner'],
+   tests_require=['pytest'],
    classifiers=[
         'Topic :: Communications :: File Sharing',
         'Development Status :: 3 - Alpha',
@@ -27,5 +31,4 @@ setup(
         'Programming Language :: Python :: 3.5',
         'Programming Language :: Python :: 3.6',
    ],
-   scripts =  ['scripts/send-cli']
 )
