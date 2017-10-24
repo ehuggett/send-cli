@@ -10,6 +10,7 @@ import argparse
 import sys
 from os.path import basename, exists
 from os import rename
+import getpass
 
 parser = argparse.ArgumentParser(description='Unofficial (Firefox) Send client')
 
@@ -55,10 +56,14 @@ def case_file(file):
     encMeta = encrypt_metadata(keys, basename(file.name))
 
     print('Uploading "' + filename + '"')
-    link = put(service, encData, encMeta, keys)
+    secretUrl, fileId, fileNonce = put(service, encData, encMeta, keys)
+
+    password = getpass.getpass(prompt='Password to download (Press Enter for no password):')
+    if password != '':
+        set_password(service, keys, secretUrl, fileId, password, fileNonce)
 
     print('File Uploaded, use the following link to retrieve it')
-    print(link)
+    print(secretUrl)
 
 if args.url:
     case_url(args.url)

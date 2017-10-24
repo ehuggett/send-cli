@@ -3,7 +3,9 @@ import requests
 
 from Cryptodome.Cipher import AES
 from Cryptodome.Random import get_random_bytes
-from base64 import urlsafe_b64encode
+import Cryptodome.Hash.HMAC
+import Cryptodome.Hash.SHA256
+from base64 import urlsafe_b64encode, urlsafe_b64decode
 from tempfile import SpooledTemporaryFile
 from urllib.parse import quote_plus
 from requests_toolbelt import MultipartEncoder, MultipartEncoderMonitor
@@ -68,4 +70,24 @@ def put(service, encData, encMeta, keys):
     r = requests.post(service, data=monitor, headers=headers, stream=True)
     r.raise_for_status()
     pbar.close()
-    return r.json()['url'] + '#' + jwk_encode(keys.secretKey)
+
+    bodyJson = r.json()
+    secretUrl = bodyJson['url'] + '#' + jwk_encode(keys.secretKey)
+    fileId = bodyJson['id']
+    fileNonce = urlsafe_b64decode(r.headers['WWW-Authenticate'].replace('send-v1 ','') + '==')
+    return secretUrl, fileId, fileNonce
+
+def sign_nonce(key, nonce):
+    #HMAC.new(key, msg='', digestmod=None)
+    return Cryptodome.Hash.HMAC.new(key, nonce, digestmod=Cryptodome.Hash.SHA256).digest()
+
+def set_password(service, keys, url, fileId, password, nonce):
+    # TODO fix url handling
+    service = service.replace('api/upload','api/password/' + str(fileId) )
+
+    sig = sign_nonce(keys.authKey, nonce)
+    newAuthKey = keys.deriveNewAuthKey(password, url)
+
+    headers = {'Authorization' : 'send-v1 ' + jwk_encode(sig) }
+    r = requests.post(service, json={'auth' :jwk_encode(newAuthKey) }, headers=headers )
+    r.raise_for_status()
