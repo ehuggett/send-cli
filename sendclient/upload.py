@@ -13,12 +13,6 @@ from requests_toolbelt import MultipartEncoder, MultipartEncoderMonitor
 
 from sendclient.common import *
 
-def jwk_encode(key):
-    '''base64 encode with url safe alphabet and strip padding'''
-    jwk = urlsafe_b64encode(key)
-    jwk = jwk.decode('utf-8').replace('=', '')
-    return jwk
-
 def encrypt_file(file, keys=secretKeys()):
     '''Encrypt file data with the same method as the Send browser/js client'''
     key = keys.encryptKey
@@ -41,7 +35,7 @@ def encrypt_file(file, keys=secretKeys()):
 
 def encrypt_metadata(keys, fileName, fileType='application/octet-stream'):
     '''Encrypt file metadata with the same method as the Send browser/js client'''
-    metadata = json.dumps({'iv' : jwk_encode(keys.encryptIV), 'name' : fileName, 'type' : fileType}).encode('utf8')
+    metadata = json.dumps({'iv' : unpadded_urlsafe_b64encode(keys.encryptIV), 'name' : fileName, 'type' : fileType}).encode('utf8')
 
     cipher = AES.new(keys.metaKey, AES.MODE_GCM, keys.metaIV)
     encMeta, gcmTag = cipher.encrypt_and_digest(metadata)
@@ -63,8 +57,8 @@ def put(service, encData, encMeta, keys):
     monitor = MultipartEncoderMonitor(files, lambda files: pbar.update(monitor.bytes_read - pbar.n))
 
     headers = {
-        'X-File-Metadata' : jwk_encode(encMeta),
-        'Authorization' : 'send-v1 ' + jwk_encode(keys.authKey),
+        'X-File-Metadata' : unpadded_urlsafe_b64encode(encMeta),
+        'Authorization' : 'send-v1 ' + unpadded_urlsafe_b64encode(keys.authKey),
         'Content-type' : monitor.content_type
     }
 
@@ -73,7 +67,7 @@ def put(service, encData, encMeta, keys):
     pbar.close()
 
     bodyJson = r.json()
-    secretUrl = bodyJson['url'] + '#' + jwk_encode(keys.secretKey)
+    secretUrl = bodyJson['url'] + '#' + unpadded_urlsafe_b64encode(keys.secretKey)
     fileId = bodyJson['id']
     fileNonce = urlsafe_b64decode(r.headers['WWW-Authenticate'].replace('send-v1 ','') + '==')
     return secretUrl, fileId, fileNonce
@@ -89,8 +83,8 @@ def set_password(service, keys, url, fileId, password, nonce):
     sig = sign_nonce(keys.authKey, nonce)
     newAuthKey = keys.deriveNewAuthKey(password, url)
 
-    headers = {'Authorization' : 'send-v1 ' + jwk_encode(sig) }
-    r = requests.post(service, json={'auth' :jwk_encode(newAuthKey) }, headers=headers )
+    headers = {'Authorization' : 'send-v1 ' + unpadded_urlsafe_b64encode(sig) }
+    r = requests.post(service, json={'auth' :unpadded_urlsafe_b64encode(newAuthKey) }, headers=headers )
     r.raise_for_status()
 
 def send_file(service, file, fileName=None, password=None, silent=False):

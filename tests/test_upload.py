@@ -1,8 +1,3 @@
-from sendclient.upload import jwk_encode
-def test_jwk_encode():
-    key = b'\xdf\xd1\x0b\xed+\xaa\xc1cX{\x82\x12\x97c4\xea'
-    assert jwk_encode(key) == '39EL7SuqwWNYe4ISl2M06g'
-
 from sendclient.upload import encrypt_file
 from hashlib import sha256
 def test_encrypt_file(testdata_1M):
