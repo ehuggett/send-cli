@@ -2,7 +2,8 @@
 
 print('\033[1;41m!!! Experimental/alpha quality suitable for testing at your own risk only !!!\033[0m')
 
-from sendclient.download import *
+# Conditional imports in this file
+# import sendclient.download
 # import sendclient.upload
 
 import argparse
@@ -34,23 +35,23 @@ args = parser.parse_args()
 service = args.altservice or args.service
 
 def case_url(url):
-    print('Downloading ' + url)
-    data, filename, key, iv, tag = get(url, args.ignore_version)
-    filename = input('Press enter to save to "' + filename + '", or specify a new name now: ') or filename
+    import sendclient.download
 
-    print('Decrypting to "' + filename + '"')
-    tmpfile = decrypt(data, key, iv, tag)
-    rename(tmpfile.name, filename)
+    file, suggested_name = sendclient.download.send_urlToFile(url, ignoreVersion=args.ignore_version)
+
+    filename = input('Press enter to save to "' + suggested_name + '", or specify a new name now: ') or suggested_name
+    rename(file.name, filename)
     print("Done.")
 
 def case_file(file):
     import sendclient.upload
 
-    password = getpass.getpass(prompt='Password to download (Press Enter for no password):')
+    print("Would you like to set a download password? if so enter it now (push enter for no password")
+    password = getpass.getpass()
     if password != '':
-        secretUrl = sendclient.upload.send_file(service, file, password=password)
+        secretUrl = sendclient.upload.send_file(service, file, password=password, ignoreVersion=args.ignore_version)
     else:
-        secretUrl = sendclient.upload.send_file(service, file)
+        secretUrl = sendclient.upload.send_file(service, file, ignoreVersion=args.ignore_version)
 
     print('File Uploaded, use the following link to retrieve it')
     print(secretUrl)
@@ -63,7 +64,7 @@ elif args.input:
     '''determine if the input is a file or a url'''
     if exists(args.input):
         # upload
-        # TODO ask for confirmation (as --upload was not specified)
+        # TODO ask for confirmation (as --file was not specified)
         case_file(open(args.input, 'rb'))
     else:
         # download
