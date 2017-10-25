@@ -1,20 +1,21 @@
 import json
-import requests
 import os
+import requests
+import tempfile
 
 import Cryptodome.Cipher.AES
 import Cryptodome.Hash.HMAC
 import Cryptodome.Hash.SHA256
-from tempfile import SpooledTemporaryFile
-from requests_toolbelt import MultipartEncoder, MultipartEncoderMonitor
+import requests_toolbelt
 
-from sendclient.common import unpadded_urlsafe_b64encode,unpadded_urlsafe_b64decode, secretKeys, SPOOL_SIZE, CHUNK_SIZE, checkServerVersion, progbar, fileSize
+from sendclient.common import unpadded_urlsafe_b64encode, unpadded_urlsafe_b64decode, secretKeys, SPOOL_SIZE, CHUNK_SIZE, checkServerVersion, progbar, fileSize
+
 
 def encrypt_file(file, keys=secretKeys()):
     '''Encrypt file data with the same method as the Send browser/js client'''
     key = keys.encryptKey
     iv = keys.encryptIV
-    encData = SpooledTemporaryFile(max_size=SPOOL_SIZE, mode='w+b')
+    encData = tempfile.SpooledTemporaryFile(max_size=SPOOL_SIZE, mode='w+b')
     cipher = Cryptodome.Cipher.AES.new(key, Cryptodome.Cipher.AES.MODE_GCM, iv)
 
     pbar = progbar(fileSize(file))
@@ -49,9 +50,9 @@ def put(service, encData, encMeta, keys):
     if checkServerVersion(service.replace('api/upload', '')) == False:
         print('\033[1;41m!!! Potentially incompatible server version !!!\033[0m')
 
-    files = MultipartEncoder(fields={'file': ('blob', encData, 'application/octet-stream') })
+    files = requests_toolbelt.MultipartEncoder(fields={'file': ('blob', encData, 'application/octet-stream') })
     pbar = progbar(files.len)
-    monitor = MultipartEncoderMonitor(files, lambda files: pbar.update(monitor.bytes_read - pbar.n))
+    monitor = requests_toolbelt.MultipartEncoderMonitor(files, lambda files: pbar.update(monitor.bytes_read - pbar.n))
 
     headers = {
         'X-File-Metadata' : unpadded_urlsafe_b64encode(encMeta),
@@ -66,22 +67,22 @@ def put(service, encData, encMeta, keys):
     bodyJson = r.json()
     secretUrl = bodyJson['url'] + '#' + unpadded_urlsafe_b64encode(keys.secretKey)
     fileId = bodyJson['id']
-    fileNonce = unpadded_urlsafe_b64decode(r.headers['WWW-Authenticate'].replace('send-v1 ',''))
+    fileNonce = unpadded_urlsafe_b64decode(r.headers['WWW-Authenticate'].replace('send-v1 ', ''))
     return secretUrl, fileId, fileNonce
 
 def sign_nonce(key, nonce):
-    #HMAC.new(key, msg='', digestmod=None)
+    # HMAC.new(key, msg='', digestmod=None)
     return Cryptodome.Hash.HMAC.new(key, nonce, digestmod=Cryptodome.Hash.SHA256).digest()
 
 def set_password(service, keys, url, fileId, password, nonce):
     # TODO fix url handling
-    service = service.replace('api/upload','api/password/' + str(fileId) )
+    service = service.replace('api/upload', 'api/password/' + str(fileId))
 
     sig = sign_nonce(keys.authKey, nonce)
     newAuthKey = keys.deriveNewAuthKey(password, url)
 
     headers = {'Authorization' : 'send-v1 ' + unpadded_urlsafe_b64encode(sig) }
-    r = requests.post(service, json={'auth' :unpadded_urlsafe_b64encode(newAuthKey) }, headers=headers )
+    r = requests.post(service, json={'auth' :unpadded_urlsafe_b64encode(newAuthKey) }, headers=headers)
     r.raise_for_status()
 
 def send_file(service, file, fileName=None, password=None, silent=False):
@@ -90,7 +91,7 @@ def send_file(service, file, fileName=None, password=None, silent=False):
 
     print('Encrypting data from "' + file.name + '"')
     keys = secretKeys()
-    encData= encrypt_file(file, keys)
+    encData = encrypt_file(file, keys)
     encMeta = encrypt_metadata(keys, fileName)
 
     print('Uploading "' + fileName + '"')
