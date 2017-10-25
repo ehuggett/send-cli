@@ -47,9 +47,6 @@ def put(service, encData, encMeta, keys):
        Caution! Data is uploaded as given, this function will not encrypt it for you
     '''
 
-    if checkServerVersion(service.replace('api/upload', '')) == False:
-        print('\033[1;41m!!! Potentially incompatible server version !!!\033[0m')
-
     files = requests_toolbelt.MultipartEncoder(fields={'file': ('blob', encData, 'application/octet-stream') })
     pbar = progbar(files.len)
     monitor = requests_toolbelt.MultipartEncoderMonitor(files, lambda files: pbar.update(monitor.bytes_read - pbar.n))
@@ -71,10 +68,12 @@ def put(service, encData, encMeta, keys):
     return secretUrl, fileId, fileNonce
 
 def sign_nonce(key, nonce):
+    ''' sign the server nonce from the WWW-Authenticate header with an authKey'''
     # HMAC.new(key, msg='', digestmod=None)
     return Cryptodome.Hash.HMAC.new(key, nonce, digestmod=Cryptodome.Hash.SHA256).digest()
 
 def set_password(service, keys, url, fileId, password, nonce):
+    ''' sets the download password by sending a HMAC key derived from it to the Send server'''
     # TODO fix url handling
     service = service.replace('api/upload', 'api/password/' + str(fileId))
 
@@ -85,7 +84,11 @@ def set_password(service, keys, url, fileId, password, nonce):
     r = requests.post(service, json={'auth' :unpadded_urlsafe_b64encode(newAuthKey) }, headers=headers)
     r.raise_for_status()
 
-def send_file(service, file, fileName=None, password=None, silent=False):
+def send_file(service, file, fileName=None, password=None, ignoreVersion=False):
+
+    if checkServerVersion(service.replace('api/upload', ''), ignoreVersion=ignoreVersion) == False:
+        print('\033[1;41m!!! Potentially incompatible server version !!!\033[0m')
+
     ''' Encrypt & Upload a file to send and return the download URL'''
     fileName = fileName if fileName != None else os.path.basename(file.name)
 

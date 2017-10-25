@@ -15,7 +15,8 @@ setup(
       'requests',
       'requests-toolbelt',
       'tqdm',
-      'urllib3'
+      'urllib3',
+      'beautifulsoup4'
    ],
    setup_requires=['pytest-runner'],
    tests_require=['pytest'],

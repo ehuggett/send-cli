@@ -1,12 +1,15 @@
-import requests
+import getpass
 import json
+import requests
+import tempfile
 
-from urllib.parse import unquote_plus
-from Cryptodome.Cipher import AES
-from base64 import urlsafe_b64decode
-from tempfile import SpooledTemporaryFile, NamedTemporaryFile
+import Cryptodome.Cipher.AES
+import Cryptodome.Hash.HMAC
+import Cryptodome.Hash.SHA256
+import bs4
 
-from sendclient.common import *
+from sendclient.common import unpadded_urlsafe_b64decode, unpadded_urlsafe_b64encode, SPOOL_SIZE, CHUNK_SIZE, progbar, secretKeys, fileSize, checkServerVersion
+
 
 def splitkeyurl(url):
     '''
@@ -15,31 +18,19 @@ def splitkeyurl(url):
     '''
     key = url[-22:]
     urlid = url[-34:-24]
-    prefix = url[:-43]
-    return prefix, urlid, key
+    service = url[:-43]
+    return service, urlid, key
 
-def key_decode(jwk):
-    """given the key from the Send URL returns the raw aes key"""
-    # missing padding will error but superfluous padding is ignored ¯\_(ツ)_/¯
-    jwk += '==='
-    raw = urlsafe_b64decode(jwk.encode('utf-8'))
-    return raw
-
-def get(url, ignoreVersion=False):
+def api_download(service, fileId, authorisation):
     '''Given a Send url, download and return the encrypted data and metadata'''
-    prefix, urlid, key = splitkeyurl(url)
+    data = tempfile.SpooledTemporaryFile(max_size=SPOOL_SIZE, mode='w+b')
 
-    if checkServerVersion(prefix, ignoreVersion) == False:
-        raise Exception('Potentially incompatible server version, use --ignore-version to disable version checks')
+    headers = {'Authorization' : 'send-v1 ' + unpadded_urlsafe_b64encode(authorisation)}
+    url = service + 'api/download/' + fileId
 
-    data = SpooledTemporaryFile(max_size=SPOOL_SIZE, mode='w+b')
-
-    r = requests.get(prefix + 'api/download/' + urlid, stream=True)
+    r = requests.get(url, headers=headers, stream=True)
     r.raise_for_status()
     content_length = int(r.headers['Content-length'])
-    meta = json.loads(r.headers['X-File-Metadata'])
-    filename = unquote_plus(meta['filename'])
-    iv = meta['id']
 
     pbar = progbar(content_length)
     for chunk in r.iter_content(chunk_size=CHUNK_SIZE):
@@ -58,17 +49,15 @@ def get(url, ignoreVersion=False):
     data.truncate()
 
     data.seek(0)
-    return data, filename, key, iv, tag
+    return data, tag
 
-def decrypt(data, key, iv, tag):
+def decrypt_filedata(data, key, iv, tag):
     '''Decrypts a file from Send'''
-    key = key_decode(key)
-    iv = bytes.fromhex(iv)
-    plain = NamedTemporaryFile(mode='w+b', delete=False)
+    plain = tempfile.NamedTemporaryFile(mode='w+b', delete=False)
 
     pbar = progbar(fileSize(data))
 
-    obj = AES.new(key, AES.MODE_GCM, iv)
+    obj = Cryptodome.Cipher.AES.new(key, Cryptodome.Cipher.AES.MODE_GCM, iv)
     prev_chunk = b''
     for chunk in iter(lambda: data.read(CHUNK_SIZE), b''):
         plain.write(obj.decrypt(prev_chunk))
@@ -81,3 +70,94 @@ def decrypt(data, key, iv, tag):
 
     plain.seek(0)
     return(plain)
+
+def decrypt_metadata(encMeta, keys):
+    cipher = Cryptodome.Cipher.AES.new(keys.metaKey, Cryptodome.Cipher.AES.MODE_GCM, keys.metaIV)
+    tag = encMeta[-16:]
+    encMeta = encMeta[:-16]
+    metadata = json.loads(cipher.decrypt_and_verify(encMeta, tag).decode())
+    return metadata
+
+def check_for_password(url):
+    # Its very unlikely that requests would pass the secretKey to the server, but lets ensure its not present
+    url = url.rsplit('#')[0]
+    response = requests.get(url)
+    response.raise_for_status()
+
+    parse = bs4.BeautifulSoup(response.text, 'html.parser').find(id='dl-file')['data-requires-password']
+
+    if parse == '0':
+        passwordRequired = False
+    elif parse == '1':
+        passwordRequired = True
+    else:
+        print(parse)
+        Exception('Failed to read password requirement from html')
+
+    return passwordRequired
+
+def get_nonce(url):
+    r = requests.get(url)
+    r.raise_for_status()
+    nonce = unpadded_urlsafe_b64decode(r.headers['WWW-Authenticate'].replace('send-v1 ', ''))
+    return nonce
+
+def sign_nonce(key, nonce):
+    ''' sign the server nonce from the WWW-Authenticate header with an authKey'''
+    # HMAC.new(key, msg='', digestmod=None)
+    return Cryptodome.Hash.HMAC.new(key, nonce, digestmod=Cryptodome.Hash.SHA256).digest()
+
+def api_metadata(service, fileId, authorisation):
+    headers = {'Authorization' : 'send-v1 ' + unpadded_urlsafe_b64encode(authorisation)}
+    url = service + 'api/metadata/' + fileId
+    response = requests.get(url, headers=headers)
+    response.raise_for_status()
+    newNonce = unpadded_urlsafe_b64decode(response.headers['WWW-Authenticate'].replace('send-v1 ', ''))
+    return response.json(), newNonce
+
+def send_urlToFile(url, password=None, ignoreVersion=False):
+    service, fileId, key = splitkeyurl(url)
+
+    if checkServerVersion(service, ignoreVersion) == False:
+        raise Exception('Potentially incompatible server version, use --ignore-version to disable version checks')
+
+    passwordRequired = check_for_password(service + 'download/' + str(fileId) + '/')
+
+    rawKey = unpadded_urlsafe_b64decode(key)
+    if passwordRequired == False and password == None:
+        keys = secretKeys(rawKey)
+    elif passwordRequired == True and password != None:
+        keys = secretKeys(rawKey, password=password, url=url)
+        keys.authKey = keys.newAuthKey
+    elif passwordRequired and password == None:
+        print("A password is required, please enter it now")
+        password = getpass.getpass()
+        keys = secretKeys(rawKey, password=password, url=url)
+        keys.authKey = keys.newAuthKey
+    elif passwordRequired == False and password != None:
+        raise Exception('A password was provided but none is required')
+
+    print('Checking if file exists...')
+    passwordRequired = check_for_password(service + 'download/' + fileId)
+
+    if password == None and passwordRequired == True:
+        raise Exception('This Send url requires a password')
+
+    nonce = get_nonce(service + 'download/' + str(fileId) + '/')
+    authorisation = sign_nonce(keys.authKey, nonce)
+    print('Fetching metadata...')
+    jsonMeta, nonce = api_metadata(service, fileId, authorisation)
+
+    encMeta = unpadded_urlsafe_b64decode(jsonMeta['metadata'])
+    metadata = decrypt_metadata(encMeta, keys)
+    keys.encryptIV = unpadded_urlsafe_b64decode(metadata['iv'])
+    print('The file wishes to be called \'' + metadata['name'] + '\' and is ' + str(jsonMeta['size'] - 16) + ' bytes in size')
+
+    print('Downloading ' + url)
+    authorisation = sign_nonce(keys.authKey, nonce)
+    data, tag = api_download(service, fileId, authorisation)
+
+    print('Decrypting to temp file')
+    tmpfile = decrypt_filedata(data, keys.encryptKey, keys.encryptIV, tag)
+
+    return tmpfile, metadata['name']
