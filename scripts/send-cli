@@ -8,18 +8,17 @@ print('\033[1;41m!!! Experimental/alpha quality suitable for testing at your own
 
 import argparse
 import sys
-from os.path import basename, exists
-from os import rename
+import os
 import getpass
 
 parser = argparse.ArgumentParser(description='Unofficial (Firefox) Send client')
 
 service = parser.add_argument_group('Set the Send service to used').add_mutually_exclusive_group()
-service.add_argument('--service-local', dest='altservice', action='store_const', const='http://localhost:1443/api/upload', help='Use a Send service at http://localhost:1443/api/upload')
-service.add_argument('--service-dev', dest='altservice', action='store_const', const='https://send.dev.mozaws.net/api/upload', help='Use the Send development server for upload')
-service.add_argument('--service-stage', dest='altservice', action='store_const', const='https://send.stage.mozaws.net/api/upload', help='Use the Send staging server for upload')
-service.add_argument('--service-live', dest='altservice', action='store_const', const='https://send.firefox.com/api/upload', help='Use the Send production server for upload (Default)')
-service.add_argument('--service', type=str, default='https://send.firefox.com/api/upload', help='Specify the url of a Send service to use for upload, should end with /api/upload')
+service.add_argument('--service-local', dest='altservice', action='store_const', const='http://localhost:8080/', help='Use a Send service at http://localhost:8080')
+service.add_argument('--service-dev', dest='altservice', action='store_const', const='https://send.dev.mozaws.net/', help='Use the Send development server for upload')
+service.add_argument('--service-stage', dest='altservice', action='store_const', const='https://send.stage.mozaws.net/', help='Use the Send staging server for upload')
+service.add_argument('--service-live', dest='altservice', action='store_const', const='https://send.firefox.com/', help='Use the Send production server for upload (Default)')
+service.add_argument('--service', type=str, default=os.environ.get('SEND_SERVICE', 'https://send.firefox.com/'), help='Specify the url of a Send service to use for upload, can also be set with the environment variable SEND_SERVER')
 
 action = parser.add_argument_group('Action').add_mutually_exclusive_group()
 action.add_argument('--file', type=argparse.FileType('rb'), help='Upload the specified file to Firefox Send')
@@ -40,13 +39,13 @@ def case_url(url):
     file, suggested_name = sendclient.download.send_urlToFile(url, ignoreVersion=args.ignore_version)
 
     filename = input('Press enter to save to "' + suggested_name + '", or specify a new name now: ') or suggested_name
-    rename(file.name, filename)
+    os.rename(file.name, filename)
     print("Done.")
 
 def case_file(file):
     import sendclient.upload
 
-    print("Would you like to set a download password? if so enter it now (push enter for no password")
+    print("Would you like to set a download password? if so enter it now (push enter for no password)")
     password = getpass.getpass()
     if password != '':
         secretUrl = sendclient.upload.send_file(service, file, password=password, ignoreVersion=args.ignore_version)
@@ -62,7 +61,7 @@ elif args.file:
     case_file(args.file)
 elif args.input:
     '''determine if the input is a file or a url'''
-    if exists(args.input):
+    if os.path.exists(args.input):
         # upload
         # TODO ask for confirmation (as --file was not specified)
         case_file(open(args.input, 'rb'))
