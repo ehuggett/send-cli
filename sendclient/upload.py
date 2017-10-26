@@ -41,12 +41,12 @@ def encrypt_metadata(keys, fileName, fileType='application/octet-stream'):
     # WebcryptoAPI expects the gcm tag at the end of the ciphertext, return them concatenated
     return encMeta + gcmTag
 
-def put(service, encData, encMeta, keys):
+def api_upload(service, encData, encMeta, keys):
     '''
        Uploads data to Send.
        Caution! Data is uploaded as given, this function will not encrypt it for you
     '''
-
+    service += 'api/upload'
     files = requests_toolbelt.MultipartEncoder(fields={'file': ('blob', encData, 'application/octet-stream') })
     pbar = progbar(files.len)
     monitor = requests_toolbelt.MultipartEncoderMonitor(files, lambda files: pbar.update(monitor.bytes_read - pbar.n))
@@ -74,8 +74,7 @@ def sign_nonce(key, nonce):
 
 def set_password(service, keys, url, fileId, password, nonce):
     ''' sets the download password by sending a HMAC key derived from it to the Send server'''
-    # TODO fix url handling
-    service = service.replace('api/upload', 'api/password/' + str(fileId))
+    service += 'api/password/' + str(fileId)
 
     sig = sign_nonce(keys.authKey, nonce)
     newAuthKey = keys.deriveNewAuthKey(password, url)
@@ -86,7 +85,7 @@ def set_password(service, keys, url, fileId, password, nonce):
 
 def send_file(service, file, fileName=None, password=None, ignoreVersion=False):
 
-    if checkServerVersion(service.replace('api/upload', ''), ignoreVersion=ignoreVersion) == False:
+    if checkServerVersion(service, ignoreVersion=ignoreVersion) == False:
         print('\033[1;41m!!! Potentially incompatible server version !!!\033[0m')
 
     ''' Encrypt & Upload a file to send and return the download URL'''
@@ -98,7 +97,7 @@ def send_file(service, file, fileName=None, password=None, ignoreVersion=False):
     encMeta = encrypt_metadata(keys, fileName)
 
     print('Uploading "' + fileName + '"')
-    secretUrl, fileId, fileNonce = put(service, encData, encMeta, keys)
+    secretUrl, fileId, fileNonce = api_upload(service, encData, encMeta, keys)
 
     if password != None:
         print('Setting password')
