@@ -70,7 +70,7 @@ def decrypt_filedata(data, keys):
     pbar.close()
 
     plain.seek(0)
-    return(plain)
+    return plain
 
 def decrypt_metadata(encMeta, keys):
     cipher = Cryptodome.Cipher.AES.new(keys.metaKey, Cryptodome.Cipher.AES.MODE_GCM, keys.metaIV)
