@@ -38,6 +38,11 @@ def api_download(service, fileId, authorisation):
         pbar.update(len(chunk))
     pbar.close()
 
+    data.seek(0)
+    return data
+
+def decrypt_filedata(data, keys):
+    '''Decrypts a file from Send'''
     # The last 16 bytes / 128 bits of data is the GCM tag
     # https://www.w3.org/TR/WebCryptoAPI/#aes-gcm-operations :-
     # 7. Let ciphertext be equal to C | T, where '|' denotes concatenation.
@@ -47,17 +52,13 @@ def api_download(service, fileId, authorisation):
     # now truncate the file to only contain encrypted data
     data.seek(-16, 2)
     data.truncate()
-
     data.seek(0)
-    return data, tag
 
-def decrypt_filedata(data, key, iv, tag):
-    '''Decrypts a file from Send'''
     plain = tempfile.NamedTemporaryFile(mode='w+b', delete=False)
 
     pbar = progbar(fileSize(data))
 
-    obj = Cryptodome.Cipher.AES.new(key, Cryptodome.Cipher.AES.MODE_GCM, iv)
+    obj = Cryptodome.Cipher.AES.new(keys.encryptKey, Cryptodome.Cipher.AES.MODE_GCM, keys.encryptIV)
     prev_chunk = b''
     for chunk in iter(lambda: data.read(CHUNK_SIZE), b''):
         plain.write(obj.decrypt(prev_chunk))
@@ -155,9 +156,9 @@ def send_urlToFile(url, password=None, ignoreVersion=False):
 
     print('Downloading ' + url)
     authorisation = sign_nonce(keys.authKey, nonce)
-    data, tag = api_download(service, fileId, authorisation)
+    data = api_download(service, fileId, authorisation)
 
     print('Decrypting to temp file')
-    tmpfile = decrypt_filedata(data, keys.encryptKey, keys.encryptIV, tag)
+    tmpfile = decrypt_filedata(data, keys)
 
     return tmpfile, metadata['name']
