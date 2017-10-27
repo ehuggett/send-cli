@@ -8,7 +8,7 @@ def test_encrypt_file(testdata_1M):
             self.encryptIV = b'\x81\xbe^\t\xc1\x11Wa\x03\xa8Pv'
 
     keys = mock_secretKeys()
-    file = open(str(testdata_1M), 'rb')
+    file = open(testdata_1M, 'rb')
 
     encData = encrypt_file(file, keys)
 
