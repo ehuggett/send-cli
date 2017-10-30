@@ -10,6 +10,7 @@ import argparse
 import sys
 import os
 import getpass
+import tempfile
 
 parser = argparse.ArgumentParser(description='Unofficial (Firefox) Send client')
 
@@ -22,6 +23,7 @@ service.add_argument('--service', type=str, default=os.environ.get('SEND_SERVICE
 
 action = parser.add_argument_group('Action').add_mutually_exclusive_group()
 action.add_argument('--file', type=argparse.FileType('rb'), help='Upload the specified file to Firefox Send')
+action.add_argument('--stdin', type=str, help='Upload data read from standard input with this filename')
 action.add_argument('--url', type=str, help='Download a file with a Send link')
 
 parser.add_argument('input', nargs='?', help='Uploads or downloads a file specified by path or url, no other options required')
@@ -42,15 +44,15 @@ def case_url(url):
     os.rename(file.name, filename)
     print("Done.")
 
-def case_file(file):
+def case_file(file, fileName=None):
     import sendclient.upload
 
     print("Would you like to set a download password? if so enter it now (push enter for no password)")
     password = getpass.getpass()
     if password != '':
-        secretUrl = sendclient.upload.send_file(service, file, password=password, ignoreVersion=args.ignore_version)
+        secretUrl = sendclient.upload.send_file(service, file, password=password, ignoreVersion=args.ignore_version, fileName=fileName)
     else:
-        secretUrl = sendclient.upload.send_file(service, file, ignoreVersion=args.ignore_version)
+        secretUrl = sendclient.upload.send_file(service, file, ignoreVersion=args.ignore_version, fileName=fileName)
 
     print('File Uploaded, use the following link to retrieve it')
     print(secretUrl)
@@ -59,6 +61,13 @@ if args.url:
     case_url(args.url)
 elif args.file:
     case_file(args.file)
+elif args.stdin:
+    # Write stdin to a temp file
+    hack = tempfile.TemporaryFile()
+    hack.write(sys.stdin.buffer.read())
+    hack.seek(0)
+    case_file(hack, fileName=args.stdin)
+
 elif args.input:
     '''determine if the input is a file or a url'''
     if os.path.exists(args.input):
