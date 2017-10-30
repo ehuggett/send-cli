@@ -18,7 +18,7 @@ service.add_argument('--service-local', dest='altservice', action='store_const',
 service.add_argument('--service-dev', dest='altservice', action='store_const', const='https://send.dev.mozaws.net/', help='Use the Send development server for upload')
 service.add_argument('--service-stage', dest='altservice', action='store_const', const='https://send.stage.mozaws.net/', help='Use the Send staging server for upload')
 service.add_argument('--service-live', dest='altservice', action='store_const', const='https://send.firefox.com/', help='Use the Send production server for upload (Default)')
-service.add_argument('--service', type=str, default=os.environ.get('SEND_SERVICE', 'https://send.firefox.com/'), help='Specify the url of a Send service to use for upload, can also be set with the environment variable SEND_SERVER')
+service.add_argument('--service', type=str, default=os.environ.get('SEND_SERVICE', 'https://send.firefox.com/'), help='Specify the url of a Send service to use for upload, can also be set with the environment variable SEND_SERVICE')
 
 action = parser.add_argument_group('Action').add_mutually_exclusive_group()
 action.add_argument('--file', type=argparse.FileType('rb'), help='Upload the specified file to Firefox Send')
