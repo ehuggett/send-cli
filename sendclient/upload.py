@@ -91,7 +91,7 @@ def send_file(service, file, fileName=None, password=None, ignoreVersion=False):
     ''' Encrypt & Upload a file to send and return the download URL'''
     fileName = fileName if fileName != None else os.path.basename(file.name)
 
-    print('Encrypting data from "' + file.name + '"')
+    print('Encrypting data from "' + fileName + '"')
     keys = secretKeys()
     encData = encrypt_file(file, keys)
     encMeta = encrypt_metadata(keys, fileName)
