@@ -65,7 +65,8 @@ def api_upload(service, encData, encMeta, keys):
     secretUrl = bodyJson['url'] + '#' + unpadded_urlsafe_b64encode(keys.secretKey)
     fileId = bodyJson['id']
     fileNonce = unpadded_urlsafe_b64decode(r.headers['WWW-Authenticate'].replace('send-v1 ', ''))
-    return secretUrl, fileId, fileNonce
+    delete_token = body_json['delete']
+    return secretUrl, fileId, fileNonce, delete_token
 
 def sign_nonce(key, nonce):
     ''' sign the server nonce from the WWW-Authenticate header with an authKey'''
@@ -97,10 +98,10 @@ def send_file(service, file, fileName=None, password=None, ignoreVersion=False):
     encMeta = encrypt_metadata(keys, fileName)
 
     print('Uploading "' + fileName + '"')
-    secretUrl, fileId, fileNonce = api_upload(service, encData, encMeta, keys)
+    secretUrl, fileId, fileNonce, delete_token = api_upload(service, encData, encMeta, keys)
 
     if password != None:
         print('Setting password')
         set_password(service, keys, secretUrl, fileId, password, fileNonce)
 
-    return secretUrl
+    return secretUrl, delete_token
