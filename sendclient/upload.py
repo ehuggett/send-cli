@@ -61,9 +61,9 @@ def api_upload(service, encData, encMeta, keys):
     r.raise_for_status()
     pbar.close()
 
-    bodyJson = r.json()
-    secretUrl = bodyJson['url'] + '#' + unpadded_urlsafe_b64encode(keys.secretKey)
-    fileId = bodyJson['id']
+    body_json = r.json()
+    secretUrl = body_json['url'] + '#' + unpadded_urlsafe_b64encode(keys.secretKey)
+    fileId = body_json['id']
     fileNonce = unpadded_urlsafe_b64decode(r.headers['WWW-Authenticate'].replace('send-v1 ', ''))
     delete_token = body_json['delete']
     return secretUrl, fileId, fileNonce, delete_token
