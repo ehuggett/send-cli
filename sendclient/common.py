@@ -13,7 +13,7 @@ def checkServerVersion(service, ignoreVersion=False):
     r = requests.get(service + '__version__')
     r.raise_for_status()
     b = r.json()
-    if b['version'] == 'v1.2.4' and b['commit'] == 'acbf9fc':
+    if b['version'] == 'v2.0.0' and b['commit'] == 'cfdef23':
         return True
     else:
         return False
