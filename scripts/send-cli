@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
-
 print('\033[1;41m!!! Experimental/alpha quality suitable for testing at your own risk only !!!\033[0m')
 
 # Conditional imports in this file
 # import sendclient.download
 # import sendclient.upload
+# import sendclient.delete
 
 import argparse
 import sys
@@ -23,7 +23,8 @@ service.add_argument('--service', type=str, default=os.environ.get('SEND_SERVICE
 
 action = parser.add_argument_group('Action').add_mutually_exclusive_group()
 action.add_argument('--file', type=argparse.FileType('rb'), help='Upload the specified file to Firefox Send')
-action.add_argument('--stdin', type=str, help='Upload data read from standard input with this filename')
+action.add_argument('--stdin', type=str, metavar='FILENAME', help='Upload data read from standard input with this filename')
+action.add_argument('--delete', nargs=2, type=str, metavar=('URL','TOKEN') , help='Delete a file hosted on a Send server')
 action.add_argument('--url', type=str, help='Download a file with a Send link')
 
 parser.add_argument('input', nargs='?', help='Uploads or downloads a file specified by path or url, no other options required')
@@ -58,16 +59,30 @@ def case_file(file, fileName=None):
     print(secretUrl)
     print('To delete the file use this token: %s' % delete_token)
 
+def case_delete(url, delete_token):
+    import sendclient.download
+    import sendclient.delete
+    service, file_id, key = sendclient.download.splitkeyurl(url)
+    if sendclient.delete.api_delete(service, file_id, delete_token):
+        print('File successfully deleted')
+    else:
+        print('\033[1;41mError\033[0m File was not deleted')
+
 if args.url:
     case_url(args.url)
+
 elif args.file:
     case_file(args.file)
+
 elif args.stdin:
     # Write stdin to a temp file
     hack = tempfile.TemporaryFile()
     hack.write(sys.stdin.buffer.read())
     hack.seek(0)
     case_file(hack, fileName=args.stdin)
+
+elif args.delete:
+    case_delete(args.delete[0], args.delete[1])
 
 elif args.input:
     '''determine if the input is a file or a url'''
