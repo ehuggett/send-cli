@@ -6,7 +6,9 @@ python:
   - "nightly"
 
 install:
-  - nvm install node && git clone "https://github.com/mozilla/send.git" && cd send && npm install && npm start &
+  - git clone "https://github.com/mozilla/send.git" && cd send && git checkout `git describe --tags --abbrev=0 --match v[0-9+]\.[0-9+]\.[0-9+]` 
+  - npm install node && npm install
+  - npm start & sleep 15
   - pip install .
 
 script:

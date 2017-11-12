@@ -1,3 +1,7 @@
+from sendclient.common import checkServerVersion
+def test_checkServerVersion():
+    assert checkServerVersion('http://localhost:8080/')
+
 from sendclient.common import fileSize
 def test_fileSize(testdata_1M):
     # open the test file and move the pointer to check fileSize() does not change it
