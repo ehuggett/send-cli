@@ -7,7 +7,7 @@ python:
 
 install:
   - git clone "https://github.com/mozilla/send.git" && cd send && git checkout `git describe --tags --abbrev=0 --match v[0-9+]\.[0-9+]\.[0-9+]` 
-  - nvm install node && npm install
+  - nvm install node && npm install && npm run build
   - npm start & cd ../ && sleep 15
   - pip install .
 
