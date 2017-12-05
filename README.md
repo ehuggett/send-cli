@@ -11,7 +11,18 @@ Warning, Sharp Edges!
 
 Issues for bugs/features/mistakes/comments on coding style are all very welcome, please also feel free to open pull requests for nits/petty changes.
 
-Basic usage
+## Installation
+You can install the package "[sendclient](https://pypi.python.org/pypi/sendclient)" from the python package index
+```shell
+pip3 install sendclient
+```
+or from a clone of this repository
+```shell
+pip3 install /path/to/cloned/send-cli/
+```
+_tip: use `pip install -e` to install in 'editable' mode if your intending to modify the client_
+
+## Basic usage
 ```shell
 $ send-cli -h
 !!! Experimental/alpha quality suitable for testing at your own risk only !!!
