@@ -51,9 +51,9 @@ def case_file(file, fileName=None):
     print("Would you like to set a download password? if so enter it now (push enter for no password)")
     password = getpass.getpass()
     if password != '':
-        secretUrl, delete_token = sendclient.upload.send_file(service, file, password=password, ignoreVersion=args.ignore_version, fileName=fileName)
+        secretUrl, fileId, delete_token = sendclient.upload.send_file(service, file, password=password, ignoreVersion=args.ignore_version, fileName=fileName)
     else:
-        secretUrl, delete_token = sendclient.upload.send_file(service, file, ignoreVersion=args.ignore_version, fileName=fileName)
+        secretUrl, fileId, delete_token = sendclient.upload.send_file(service, file, ignoreVersion=args.ignore_version, fileName=fileName)
 
     print('File Uploaded, use the following link to retrieve it')
     print(secretUrl)
