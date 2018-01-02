@@ -28,6 +28,7 @@ action.add_argument('--stdin', type=str, metavar='FILENAME', help='Upload data r
 action.add_argument('--delete', nargs=2, type=str, metavar=('URL','TOKEN') , help='Delete a file hosted on a Send server')
 action.add_argument('--download-limit', nargs=3, type=str, metavar=('URL','TOKEN', 'LIMIT') , help='Change the download limit for a file hosted on a Send server, LIMIT must be <=20')
 action.add_argument('--url', type=str, help='Download a file with a Send link')
+action.add_argument('--change-password', type=str, help='interactively set or change the password for a file hosted on a Send server')
 
 parser.add_argument('input', nargs='?', help='Uploads or downloads a file specified by path or url, no other options required')
 
@@ -79,6 +80,28 @@ def case_params(url, owner_token, download_limit):
     else:
         print('\033[1;41mError\033[0m Download limit was not changed')
 
+def case_password(url):
+   import sendclient.download
+   import sendclient.upload
+   import sendclient.common
+   service, file_id, key = sendclient.download.splitkeyurl(url)
+   rawKey = sendclient.common.unpadded_urlsafe_b64decode(key)
+
+   if sendclient.download.check_for_password(url):
+      print('upload is already password protected, please enter the CURRENT password:')
+      currentPassword = getpass.getpass()
+      keys = sendclient.common.secretKeys(rawKey, password=currentPassword, url=url)
+      keys.authKey = keys.newAuthKey
+   else:
+      keys = sendclient.common.secretKeys(rawKey)
+
+   print('please enter the NEW password:')
+   newPassword = getpass.getpass()
+
+   nonce = sendclient.download.get_nonce(service + 'download/' + str(file_id) + '/')
+   sendclient.upload.set_password(service, keys, url, file_id, newPassword, nonce)
+   print('password set')
+
 if args.url:
     case_url(args.url)
 
@@ -107,6 +130,9 @@ elif args.input:
     else:
         # download
         case_url(args.input)
+
+elif args.change_password:
+   case_password(args.change_password)
 
 else:
     parser.print_usage()
