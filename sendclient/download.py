@@ -8,18 +8,7 @@ import Cryptodome.Hash.HMAC
 import Cryptodome.Hash.SHA256
 import bs4
 
-from sendclient.common import unpadded_urlsafe_b64decode, unpadded_urlsafe_b64encode, SPOOL_SIZE, CHUNK_SIZE, progbar, secretKeys, fileSize, checkServerVersion
-
-
-def splitkeyurl(url):
-    '''
-       Splits a Send url into key, urlid and 'prefix' for the Send server
-       Should handle any hostname, but will brake on key & id length changes
-    '''
-    key = url[-22:]
-    urlid = url[-34:-24]
-    service = url[:-43]
-    return service, urlid, key
+from sendclient.common import unpadded_urlsafe_b64decode, unpadded_urlsafe_b64encode, SPOOL_SIZE, CHUNK_SIZE, progbar, secretKeys, fileSize, checkServerVersion, splitkeyurl
 
 def api_download(service, fileId, authorisation):
     '''Given a Send url, download and return the encrypted data and metadata'''

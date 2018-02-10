@@ -1,3 +1,11 @@
+from sendclient.common import splitkeyurl
+def test_splitkeyurl():
+    url = 'https://send.firefox.com/download/c8ab3218f9/#39EL7SuqwWNYe4ISl2M06g'
+    service, urlid, key = splitkeyurl(url)
+    assert service == 'https://send.firefox.com/'
+    assert urlid == 'c8ab3218f9'
+    assert key == '39EL7SuqwWNYe4ISl2M06g'
+
 from sendclient.common import fileSize
 def test_fileSize(testdata_1M):
     # open the test file and move the pointer to check fileSize() does not change it

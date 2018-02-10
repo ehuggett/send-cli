@@ -1,11 +1,3 @@
-from sendclient.download import splitkeyurl
-def test_splitkeyurl():
-    url = 'https://send.firefox.com/download/c8ab3218f9/#39EL7SuqwWNYe4ISl2M06g'
-    service, urlid, key = splitkeyurl(url)
-    assert service == 'https://send.firefox.com/'
-    assert urlid == 'c8ab3218f9'
-    assert key == '39EL7SuqwWNYe4ISl2M06g'
-
 from sendclient.download import decrypt_filedata
 import hashlib
 def test_decrypt_filedata(testdata_1M):

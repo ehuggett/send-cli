@@ -6,6 +6,16 @@ from tqdm import tqdm
 import requests
 import base64
 
+def splitkeyurl(url):
+    '''
+       Splits a Send url into key, urlid and 'prefix' for the Send server
+       Should handle any hostname, but will brake on key & id length changes
+    '''
+    key = url[-22:]
+    urlid = url[-34:-24]
+    service = url[:-43]
+    return service, urlid, key
+
 def checkServerVersion(service, ignoreVersion=False):
     if ignoreVersion == True:
         return True
