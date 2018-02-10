@@ -27,6 +27,7 @@ action.add_argument('--file', type=argparse.FileType('rb'), help='Upload the spe
 action.add_argument('--stdin', type=str, metavar='FILENAME', help='Upload data read from standard input with this filename')
 action.add_argument('--delete', nargs=2, type=str, metavar=('URL','TOKEN') , help='Delete a file hosted on a Send server')
 action.add_argument('--download-limit', nargs=3, type=str, metavar=('URL','TOKEN', 'LIMIT') , help='Change the download limit for a file hosted on a Send server, LIMIT must be <=20')
+action.add_argument('--change-password', nargs=2, type=str, metavar=('URL','TOKEN') , help='change the password for a file hosted on a Send server')
 action.add_argument('--url', type=str, help='Download a file with a Send link')
 
 parser.add_argument('input', nargs='?', help='Uploads or downloads a file specified by path or url, no other options required')
@@ -59,7 +60,7 @@ def case_file(file, fileName=None):
 
     print('File Uploaded, use the following link to retrieve it')
     print(secretUrl)
-    print('To delete the file use this token: %s' % delete_token)
+    print('To delete the file or change the password use this token: %s' % delete_token)
 
 def case_delete(url, delete_token):
     import sendclient.download
@@ -79,6 +80,19 @@ def case_params(url, owner_token, download_limit):
     else:
         print('\033[1;41mError\033[0m Download limit was not changed')
 
+def case_password(url, owner_token):
+    import sendclient.password
+
+    password = getpass.getpass()
+    if password == '':
+        print('\033[1;41mError\033[0m Passwords cannot be unset, only changed.')
+        return
+
+    if sendclient.password.set_password(url, owner_token, password):
+        print('password was set successfully')
+    else:
+        print('\033[1;41mError\033[0m Password may not have been set/changed')
+
 if args.url:
     case_url(args.url)
 
@@ -97,6 +111,9 @@ elif args.delete:
 
 elif args.download_limit:
     case_params(args.download_limit[0], args.download_limit[1], args.download_limit[2])
+
+elif args.change_password:
+    case_password(args.change_password[0], args.change_password[1])
 
 elif args.input:
     '''determine if the input is a file or a url'''
