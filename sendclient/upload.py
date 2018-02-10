@@ -9,6 +9,7 @@ import Cryptodome.Hash.SHA256
 import requests_toolbelt
 
 from sendclient.common import unpadded_urlsafe_b64encode, unpadded_urlsafe_b64decode, secretKeys, SPOOL_SIZE, CHUNK_SIZE, checkServerVersion, progbar, fileSize
+import sendclient.password
 
 
 def encrypt_file(file, keys=secretKeys()):
@@ -76,17 +77,6 @@ def sign_nonce(key, nonce):
     # HMAC.new(key, msg='', digestmod=None)
     return Cryptodome.Hash.HMAC.new(key, nonce, digestmod=Cryptodome.Hash.SHA256).digest()
 
-def set_password(service, keys, url, fileId, password, nonce):
-    ''' sets the download password by sending a HMAC key derived from it to the Send server'''
-    service += 'api/password/' + str(fileId)
-
-    sig = sign_nonce(keys.authKey, nonce)
-    newAuthKey = keys.deriveNewAuthKey(password, url)
-
-    headers = {'Authorization' : 'send-v1 ' + unpadded_urlsafe_b64encode(sig) }
-    r = requests.post(service, json={'auth' :unpadded_urlsafe_b64encode(newAuthKey) }, headers=headers)
-    r.raise_for_status()
-
 def send_file(service, file, fileName=None, password=None, ignoreVersion=False):
 
     if checkServerVersion(service, ignoreVersion=ignoreVersion) == False:
@@ -105,6 +95,6 @@ def send_file(service, file, fileName=None, password=None, ignoreVersion=False):
 
     if password != None:
         print('Setting password')
-        set_password(service, keys, secretUrl, fileId, password, fileNonce)
+        sendclient.password.set_password(secretUrl, owner_token, password)
 
     return secretUrl, fileId, owner_token
