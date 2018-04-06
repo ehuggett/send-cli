@@ -10,7 +10,6 @@ print('\033[1;41m!!! Experimental/alpha quality suitable for testing at your own
 import argparse
 import sys
 import os
-import stat
 import getpass
 import tempfile
 
@@ -34,39 +33,13 @@ action.add_argument('--url', type=str, help='Download a file with a Send link')
 parser.add_argument('input', nargs='?', help='Uploads or downloads a file specified by path or url, no other options required')
 
 parser.add_argument('--ignore-version', help='Disable server version checks (MAY CAUSE LOSS OF DATA)', action='store_true')
-passwordInput = parser.add_argument_group('Password').add_mutually_exclusive_group()
-passwordInput.add_argument('--password', '--password-prompt', help='Protect the uploaded file with a password', action='store_true')
-passwordInput.add_argument('--password-file', type=argparse.FileType('r'), help='Read the password from this file. Must be used carefully')
-passwordInput.add_argument('--password-unsafe', type=str, help='Provide a password on the command-line (UNSAFE as password visible in process list or shell history!)')
-
+parser.add_argument('--password', help='Protect the uploaded file with a password', action='store_true')
+parser.add_argument('--password-unsafe', type=str, help='Provide a password on the command-line (UNSAFE as password visible in process list or shell history!)')
 
 args = parser.parse_args()
 
 # Set the service url to local/dev/stage/pro or other, there should be a cleaner way of doing this
 service = args.altservice or args.service
-
-def get_password(prompt='Please enter a password'):
-
-    if args.password:
-        print(prompt)
-        password = getpass.getpass()
-
-    elif args.password_file:
-        # Check and warn if the file can be read by group or other
-        mode = os.stat(args.password_file.fileno()).st_mode
-        if mode & stat.S_IRGRP or mode & stat.S_IROTH:
-            print('\033[1;41mWARNING\033[0m UNPROTECTED PASSWORD FILE. File permissions are too open.', file=sys.stderr)
-
-        password = args.password_file.read()
-
-    elif args.password_unsafe:
-        print('\033[1;41mWARNING\033[0m Providing a password on the command line is STRONGLY DISCOURAGED, see the README for more information', file=sys.stderr)
-        password = args.password_unsafe
-
-    else:
-        password = ''
-
-    return password
 
 def case_url(url):
     import sendclient.download
@@ -80,7 +53,13 @@ def case_url(url):
 def case_file(file, fileName=None):
     import sendclient.upload
 
-    password = get_password('Would you like to set a download password? if so enter it now (push enter for no password)')
+    if args.password_unsafe:
+        password = args.password_unsafe
+    elif args.password:
+        print("Would you like to set a download password? if so enter it now (push enter for no password)")
+        password = getpass.getpass()
+    else:
+        password = ''
     if password != '':
         secretUrl, fileId, delete_token = sendclient.upload.send_file(service, file, password=password, ignoreVersion=args.ignore_version, fileName=fileName)
     else:
