@@ -28,8 +28,9 @@ $ send-cli -h
 !!! Experimental/alpha quality suitable for testing at your own risk only !!!
 usage: send-cli [-h]
                 [--service-local | --service-dev | --service-stage | --service-live | --service SERVICE]
-                [--file FILE | --stdin FILENAME | --delete URL TOKEN | --download-limit URL TOKEN LIMIT | --url URL]
+                [--file FILE | --stdin FILENAME | --delete URL TOKEN | --download-limit URL TOKEN LIMIT | --change-password URL TOKEN | --url URL]
                 [--ignore-version]
+                [--password | --password-unsafe PASSWORD_UNSAFE]
                 [input]
 
 Unofficial (Firefox) Send client
@@ -59,7 +60,16 @@ Action:
   --download-limit URL TOKEN LIMIT
                         Change the download limit for a file hosted on a Send
                         server, LIMIT must be <=20
+  --change-password URL TOKEN
+                        change the password for a file hosted on a Send server
   --url URL             Download a file with a Send link
+
+Password:
+  --password            Protect the uploaded file with a password
+  --password-unsafe PASSWORD_UNSAFE
+                        Provide a password on the command-line (UNSAFE as
+                        password visible in process list or shell history!)
+
 ```
 ## Miscellaneous
 ### Password Length
