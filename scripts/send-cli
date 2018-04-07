@@ -36,8 +36,10 @@ action.add_argument('--url', type=str, help='Download a file with a Send link')
 parser.add_argument('input', nargs='?', help='Uploads or downloads a file specified by path or url, no other options required')
 
 parser.add_argument('--ignore-version', help='Disable server version checks (MAY CAUSE LOSS OF DATA)', action='store_true')
-parser.add_argument('--password', help='Protect the uploaded file with a password', action='store_true')
-parser.add_argument('--password-unsafe', type=str, help='Provide a password on the command-line (UNSAFE as password visible in process list or shell history!)')
+
+passwordInput = parser.add_argument_group('Password').add_mutually_exclusive_group()
+passwordInput.add_argument('--password', help='Protect the uploaded file with a password', action='store_true')
+passwordInput.add_argument('--password-unsafe', type=str, help='Provide a password on the command-line (UNSAFE as password visible in process list or shell history!)')
 
 args = parser.parse_args()
 
