@@ -61,3 +61,7 @@ Action:
                         server, LIMIT must be <=20
   --url URL             Download a file with a Send link
 ```
+## Miscellaneous
+### Password Length
+When uploading a file the Send UI prevents the uploading user from entering a password longer than 32 characters.
+send-cli does not enforce this limit but remains 'compatible' as Send does not currently limit password length when downloading a file.
