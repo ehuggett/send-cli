@@ -13,7 +13,10 @@ import os
 import getpass
 import tempfile
 
-parser = argparse.ArgumentParser(description='Unofficial (Firefox) Send client')
+parser = argparse.ArgumentParser(
+    description='Unofficial (Firefox) Send client',
+    fromfile_prefix_chars='@',
+    )
 
 service = parser.add_argument_group('Set the Send service to used').add_mutually_exclusive_group()
 service.add_argument('--service-local', dest='altservice', action='store_const', const='http://localhost:8080/', help='Use a Send service at http://localhost:8080')
