@@ -72,6 +72,37 @@ Password:
 
 ```
 ## Miscellaneous
+
+### Reading command line arguments from a file
+Filenames on the command line prefixed with '@' will be replaced by the arguments they contain. This is handled by argparse
+https://docs.python.org/3/library/argparse.html#fromfile-prefix-chars
+
+Example formatting
+```
+--service
+https://your-send.server/
+--password
+--file
+path/to/file
+```
+or
+```
+--service=https://your-send.server/
+--password
+--file=path/to/file
+```
+
+Multiple files can be included in the same command
+```bash
+send-cli @file1 @file2 --file path/to/file
+```
+
+### Don't put secrets on the command line!
+You can avoid secrets (such as passwords or Send URLs) being recorded in your shell history or exposed via `/proc/PID/cmdline`by either
+- having send-cli prompt you for it (e.g. `--password`)
+- reading it from a file (e.g. `--password-unsafe @password-file`) if it has to be done non-interactively.
+
+_tip: Instead of a regular file, you can avoid writing the password to disk by using a named pipe (_`mkfifo`_)_
 ### Password Length
 When uploading a file the Send UI prevents the uploading user from entering a password longer than 32 characters.
 send-cli does not enforce this limit but remains 'compatible' as Send does not currently limit password length when downloading a file.
