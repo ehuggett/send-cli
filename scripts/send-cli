@@ -105,6 +105,17 @@ def case_password(url, owner_token):
     else:
         print('\033[1;41mError\033[0m Password may not have been set/changed')
 
+# determine if the positional input is a file or a url and hack it into the appropriate option
+if args.input:
+    if os.path.exists(args.input):
+        # upload
+        args.file = open(args.input, 'rb')
+    elif args.input.startswith('http'):
+        # download
+        args.url = args.input
+    else:
+        parser.error('input does not appear to be a file or a send url')
+
 if args.url:
     case_url(args.url)
 
@@ -126,16 +137,6 @@ elif args.download_limit:
 
 elif args.change_password:
     case_password(args.change_password[0], args.change_password[1])
-
-elif args.input:
-    '''determine if the input is a file or a url'''
-    if os.path.exists(args.input):
-        # upload
-        # TODO ask for confirmation (as --file was not specified)
-        case_file(open(args.input, 'rb'))
-    else:
-        # download
-        case_url(args.input)
 
 else:
     parser.print_usage()
