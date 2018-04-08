@@ -29,7 +29,7 @@ action = parser.add_argument_group('Action').add_mutually_exclusive_group()
 action.add_argument('--file', type=argparse.FileType('rb'), help='Upload the specified file to Firefox Send')
 action.add_argument('--stdin', type=str, metavar='FILENAME', help='Upload data read from standard input with this filename')
 action.add_argument('--delete', nargs=2, type=str, metavar=('URL','TOKEN') , help='Delete a file hosted on a Send server')
-action.add_argument('--download-limit', nargs=3, type=str, metavar=('URL','TOKEN', 'LIMIT') , help='Change the download limit for a file hosted on a Send server, LIMIT must be <=20')
+action.add_argument('--change-download-limit', nargs=3, type=str, metavar=('URL','TOKEN', 'LIMIT') , help='Change the download limit for a file hosted on a Send server, LIMIT must be <=20')
 action.add_argument('--change-password', nargs=2, type=str, metavar=('URL','TOKEN') , help='change the password for a file hosted on a Send server')
 action.add_argument('--url', type=str, help='Download a file with a Send link')
 
@@ -132,7 +132,7 @@ elif args.stdin:
 elif args.delete:
     case_delete(args.delete[0], args.delete[1])
 
-elif args.download_limit:
+elif args.change_download_limit:
     case_params(args.download_limit[0], args.download_limit[1], args.download_limit[2])
 
 elif args.change_password:
