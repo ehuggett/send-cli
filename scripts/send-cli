@@ -36,6 +36,7 @@ action.add_argument('--url', type=str, help='Download a file with a Send link')
 parser.add_argument('input', nargs='?', help='Uploads or downloads a file specified by path or url, no other options required')
 
 parser.add_argument('--ignore-version', help='Disable server version checks (MAY CAUSE LOSS OF DATA)', action='store_true')
+parser.add_argument('--download-limit', nargs=1, type=int, metavar='LIMIT', help='Download limit for the uploaded file. Should be <=20' )
 
 passwordInput = parser.add_argument_group('Password').add_mutually_exclusive_group()
 passwordInput.add_argument('--password', help='Protect the uploaded file with a password', action='store_true')
@@ -66,13 +67,16 @@ def case_file(file, fileName=None):
     else:
         password = ''
     if password != '':
-        secretUrl, fileId, delete_token = sendclient.upload.send_file(service, file, password=password, ignoreVersion=args.ignore_version, fileName=fileName)
+        secretUrl, fileId, owner_token = sendclient.upload.send_file(service, file, password=password, ignoreVersion=args.ignore_version, fileName=fileName)
     else:
-        secretUrl, fileId, delete_token = sendclient.upload.send_file(service, file, ignoreVersion=args.ignore_version, fileName=fileName)
+        secretUrl, fileId, owner_token = sendclient.upload.send_file(service, file, ignoreVersion=args.ignore_version, fileName=fileName)
+
+    if args.download_limit:
+        case_params(secretUrl, owner_token, args.download_limit[0])
 
     print('File Uploaded, use the following link to retrieve it')
     print(secretUrl)
-    print('To delete the file or change the password use this token: %s' % delete_token)
+    print('To delete the file or change the password use this token: %s' % owner_token)
 
 def case_delete(url, delete_token):
     import sendclient.download
@@ -88,7 +92,7 @@ def case_params(url, owner_token, download_limit):
     import sendclient.params
     service, file_id, key = sendclient.download.splitkeyurl(url)
     if sendclient.params.api_params(service, file_id, owner_token, download_limit):
-        print('Download limit changed successfully')
+        print('Download limit changed successfully to ' + str(download_limit))
     else:
         print('\033[1;41mError\033[0m Download limit was not changed')
 
