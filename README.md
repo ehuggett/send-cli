@@ -28,8 +28,8 @@ $ send-cli -h
 !!! Experimental/alpha quality suitable for testing at your own risk only !!!
 usage: send-cli [-h]
                 [--service-local | --service-dev | --service-stage | --service-live | --service SERVICE]
-                [--file FILE | --stdin FILENAME | --delete URL TOKEN | --download-limit URL TOKEN LIMIT | --change-password URL TOKEN | --url URL]
-                [--ignore-version]
+                [--file FILE | --stdin FILENAME | --delete URL TOKEN | --change-download-limit URL TOKEN LIMIT | --change-password URL TOKEN | --url URL]
+                [--ignore-version] [--download-limit LIMIT]
                 [--password | --password-unsafe PASSWORD_UNSAFE]
                 [input]
 
@@ -42,6 +42,8 @@ positional arguments:
 optional arguments:
   -h, --help            show this help message and exit
   --ignore-version      Disable server version checks (MAY CAUSE LOSS OF DATA)
+  --download-limit LIMIT
+                        Download limit for the uploaded file. Should be <=20
 
 Set the Send service to used:
   --service-local       Use a Send service at http://localhost:8080
@@ -57,7 +59,7 @@ Action:
   --stdin FILENAME      Upload data read from standard input with this
                         filename
   --delete URL TOKEN    Delete a file hosted on a Send server
-  --download-limit URL TOKEN LIMIT
+  --change-download-limit URL TOKEN LIMIT
                         Change the download limit for a file hosted on a Send
                         server, LIMIT must be <=20
   --change-password URL TOKEN
@@ -69,7 +71,6 @@ Password:
   --password-unsafe PASSWORD_UNSAFE
                         Provide a password on the command-line (UNSAFE as
                         password visible in process list or shell history!)
-
 ```
 ## Miscellaneous
 
